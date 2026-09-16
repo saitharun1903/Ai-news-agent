@@ -26,8 +26,8 @@ export function MotionCard3D({
   useEffect(() => {
     if (typeof window !== "undefined") {
       const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-      setCanHover(mq.matches);
-      const handler = (e: MediaQueryListEvent) => setCanHover(e.matches);
+      setCanHover(mq.matches && window.innerWidth >= 768);
+      const handler = (e: MediaQueryListEvent) => setCanHover(e.matches && window.innerWidth >= 768);
       mq.addEventListener("change", handler);
       return () => mq.removeEventListener("change", handler);
     }

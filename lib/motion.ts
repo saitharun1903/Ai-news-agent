@@ -6,6 +6,16 @@
 
 import { Variants, Transition } from "framer-motion";
 
+
+// 1. LIGHTWEIGHT RESPONSIVE MOTION TOKENS (Requirements 3 & 49)
+export const MOTION_TOKENS = {
+  MOBILE_FAST: 0.14,    // 140ms: instant tap responses
+  MOBILE_NORMAL: 0.18,  // 180ms: mobile page entrance
+  TABLET_NORMAL: 0.20,  // 200ms: tablet transitions
+  DESKTOP_NORMAL: 0.25, // 250ms: desktop page transitions
+  DESKTOP_RICH: 0.32,   // 320ms: complex desktop layouts
+} as const;
+
 // 1. DURATION TOKENS (in seconds)
 export const duration = {
   instant: 0.001,
@@ -93,6 +103,58 @@ export const reducedPageVariants: Variants = {
   exit: {
     opacity: 0,
     transition: { duration: 0.08 },
+  },
+};
+
+
+// Mobile page variant: fast 180ms entrance, 4px translateY, fast ease-out (Requirement 2)
+export const mobilePageVariants: Variants = {
+  initial: { opacity: 0, y: 4 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: MOTION_TOKENS.MOBILE_NORMAL,
+      ease: [0, 0, 0.2, 1], // snappy decelerate
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.08 },
+  },
+};
+
+// Tablet page variant: 200ms
+export const tabletPageVariants: Variants = {
+  initial: { opacity: 0, y: 6 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: MOTION_TOKENS.TABLET_NORMAL,
+      ease: easing.standard,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1 },
+  },
+};
+
+// Desktop page variant: 250ms
+export const desktopPageVariants: Variants = {
+  initial: { opacity: 0, y: 6 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: MOTION_TOKENS.DESKTOP_NORMAL,
+      ease: easing.standard,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1 },
   },
 };
 

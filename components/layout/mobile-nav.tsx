@@ -26,6 +26,12 @@ import { LunorLogo } from "@/components/brand/lunor-logo";
 export function MobileNav() {
   const pathname = usePathname();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+
+  // Clear pending path when navigation completes
+  useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
 
   // Close drawer on path change
   useEffect(() => {
@@ -104,12 +110,15 @@ export function MobileNav() {
         <div className="grid grid-cols-5 items-center justify-items-center max-w-md mx-auto">
           {primaryItems.map((item) => {
             const Icon = item.icon;
-            const active = item.match(pathname);
+            // Immediate active feedback: if user tapped, immediately highlight pending path (<50ms feedback)
+            const active = pendingPath ? item.match(pendingPath) : item.match(pathname);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
+                onClick={() => setPendingPath(item.href)}
                 className={`w-full min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium transition-transform active:scale-95 ${
                   active
                     ? "text-[var(--accent)] font-semibold"
@@ -237,6 +246,7 @@ export function MobileNav() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setIsMoreOpen(false)}
                       className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all active:scale-[0.98] ${
                         isActive

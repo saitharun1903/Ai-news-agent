@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppNavbar } from "@/components/layout/app-navbar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { CommandPalette } from "@/components/layout/command-palette";
@@ -8,6 +9,7 @@ import { DesktopBriefingPopup } from "@/components/layout/desktop-briefing-popup
 import { PageTransition } from "@/components/motion/page-transition";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
 
   // Expose global opener for Cmd+K
@@ -21,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AppNavbar
         onOpenSearch={() => setCommandOpen(true)}
         onOpenBriefing={() => {
-          window.location.href = "/today";
+          router.push("/today");
         }}
       />
 
@@ -39,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop Briefing Popup */}
       <DesktopBriefingPopup
         onOpenFullBriefing={() => {
-          window.location.href = "/today";
+          router.push("/today");
         }}
       />
     </div>

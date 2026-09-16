@@ -20,6 +20,7 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
 
   // Fetch all papers from database
   const papers = await db.getPapers({ limit: 100 });
+  const profile = await db.getUserProfile();
 
   return (
     <div className="space-y-6 font-sans">
@@ -45,7 +46,7 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
       </div>
 
       {/* Interactive Discovery Engine */}
-      <ResearchDiscoveryEngine initialPapers={papers} initialTab={currentTab} />
+      <ResearchDiscoveryEngine initialPapers={papers} initialTab={currentTab} userProfile={profile} />
     </div>
   );
 }

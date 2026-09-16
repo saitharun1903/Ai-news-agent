@@ -18,6 +18,9 @@ import {
   Source,
   UserFavorite,
   UserProfile,
+  UserPreferences,
+  TechnicalDepth,
+  normalizeTechnicalDepth,
   VisualAsset,
 } from "./types";
 import { DEFAULT_SOURCES } from "@/lib/ingestion/sources";
@@ -389,21 +392,89 @@ class StorageRepository {
     );
   }
 
+  async getRecommendedPapers(options?: { limit?: number; userId?: string }): Promise<Paper[]> {
+    const data = this.load();
+    const limit = options?.limit || 10;
+    const profile = await this.getUserProfile();
+    const interested = (profile.interestedTopics || []).map((t) => t.toLowerCase());
+    const depth = normalizeTechnicalDepth(profile.difficultyPreference);
+
+    // Get completed papers to exclude from recommendations (freshness & diversity)
+    const completedPaperIds = new Set<string>();
+    for (const session of data.readingSessions || []) {
+      if (session.completed) completedPaperIds.add(session.paperId);
+    }
+
+    const availablePapers = data.papers.filter((p) => !completedPaperIds.has(p.id));
+    const pool = availablePapers.length > 0 ? availablePapers : data.papers;
+
+    const scored = pool.map((paper) => {
+      let score = (paper.upvotes || 0) * 2 + (paper.citationCount || 0);
+
+      // 1. Topic Affinity Matching
+      const paperTopics = [
+        paper.primaryCategory,
+        ...(paper.categories || []),
+        ...(paper.keywords || []),
+      ]
+        .filter(Boolean)
+        .map((t) => t.toLowerCase());
+
+      const topicMatched = interested.some((favTopic) =>
+        paperTopics.some((pt) => pt.includes(favTopic) || favTopic.includes(pt))
+      );
+
+      if (topicMatched) {
+        score += 80;
+      }
+
+      // 2. Technical Depth Calibration
+      const pDiff = (paper.difficulty || "Intermediate").toLowerCase();
+      if (depth === "accessible") {
+        if (pDiff === "beginner") score += 60;
+        else if (pDiff === "intermediate") score += 20;
+        else if (pDiff === "advanced") score -= 30;
+        if (paper.readingTimeMinutes && paper.readingTimeMinutes <= 15) score += 15;
+      } else if (depth === "rigorous") {
+        if (pDiff === "advanced") score += 60;
+        else if (pDiff === "intermediate") score += 20;
+        else if (pDiff === "beginner") score -= 30;
+        if ((paper.citationCount || 0) > 30) score += 25;
+      } else {
+        // "intermediate" or "all": balanced
+        if (pDiff === "intermediate") score += 30;
+        else score += 15;
+      }
+
+      return { paper, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map((s) => s.paper);
+  }
+
   async getPaperOfDay(): Promise<Paper | null> {
     const data = this.load();
-    const todayStr = new Date().toISOString().split("T")[0];
+    const profile = await this.getUserProfile();
+    const tz = profile.timezone || "Asia/Kolkata";
+    const todayStr = getLocalDateString(new Date(), tz);
 
     // Check if designated for today
     const tagged = data.papers.find((p) => p.isPaperOfDay && p.paperOfDayDate === todayStr);
     if (tagged) return tagged;
 
-    // Otherwise select highest impact paper
-    if (data.papers.length > 0) {
-      const candidate = [...data.papers].sort((a, b) => {
-        const scoreA = (a.upvotes || 0) * 2 + (a.citationCount || 0);
-        const scoreB = (b.upvotes || 0) * 2 + (b.citationCount || 0);
-        return scoreB - scoreA;
-      })[0];
+    // Reset old designation from prior dates
+    for (const p of data.papers) {
+      if (p.isPaperOfDay && p.paperOfDayDate !== todayStr) {
+        p.isPaperOfDay = false;
+      }
+    }
+
+    // Select candidate matching user preferences, excluding completed papers
+    const recommended = await this.getRecommendedPapers({ limit: 10 });
+    const candidate = recommended[0] || data.papers[0];
+
+    if (candidate) {
       candidate.isPaperOfDay = true;
       candidate.paperOfDayDate = todayStr;
       this.schedulePersist();
@@ -674,6 +745,56 @@ class StorageRepository {
     };
     this.schedulePersist();
     return this.getUserProfile();
+  }
+
+  async getUserPreferences(userId?: string): Promise<UserPreferences> {
+    const profile = await this.getUserProfile();
+    const depth = normalizeTechnicalDepth(profile.difficultyPreference);
+    return {
+      userId: profile.id,
+      dailyGoalMinutes: profile.dailyGoalMinutes || 25,
+      technicalDepth: depth,
+      interestedTopics: profile.interestedTopics || [],
+      timezone: profile.timezone || "Asia/Kolkata",
+      morningBriefingTime: profile.morningBriefingTime || "08:30",
+      weekendDigestEnabled: profile.weekendNotificationsEnabled ?? true,
+      desktopNotificationsEnabled: profile.desktopNotificationsEnabled ?? true,
+      soundEnabled: profile.soundEnabled ?? true,
+      updatedAt: profile.updatedAt || new Date().toISOString(),
+    };
+  }
+
+  async updateUserPreferences(userId: string, updates: Partial<UserPreferences>): Promise<UserPreferences> {
+    const profileUpdates: Partial<UserProfile> = {};
+
+    if (updates.dailyGoalMinutes !== undefined) {
+      profileUpdates.dailyGoalMinutes = updates.dailyGoalMinutes;
+    }
+    if (updates.technicalDepth !== undefined) {
+      const norm = normalizeTechnicalDepth(updates.technicalDepth);
+      profileUpdates.difficultyPreference = norm === "accessible" ? "Beginner" : norm === "rigorous" ? "Advanced" : "Intermediate";
+    }
+    if (updates.interestedTopics !== undefined) {
+      profileUpdates.interestedTopics = updates.interestedTopics;
+    }
+    if (updates.timezone !== undefined) {
+      profileUpdates.timezone = updates.timezone;
+    }
+    if (updates.morningBriefingTime !== undefined) {
+      profileUpdates.morningBriefingTime = updates.morningBriefingTime;
+    }
+    if (updates.weekendDigestEnabled !== undefined) {
+      profileUpdates.weekendNotificationsEnabled = updates.weekendDigestEnabled;
+    }
+    if (updates.desktopNotificationsEnabled !== undefined) {
+      profileUpdates.desktopNotificationsEnabled = updates.desktopNotificationsEnabled;
+    }
+    if (updates.soundEnabled !== undefined) {
+      profileUpdates.soundEnabled = updates.soundEnabled;
+    }
+
+    await this.updateUserProfile(profileUpdates);
+    return this.getUserPreferences(userId);
   }
 
   // --- Reading Sessions & Event Tracking ---

@@ -15,8 +15,15 @@ export function SharedSurfaceTransition({
   className = "",
 }: SharedSurfaceTransitionProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = React.useState(true);
 
-  if (shouldReduceMotion) {
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 768);
+    }
+  }, []);
+
+  if (shouldReduceMotion || isMobile) {
     return <div className={className}>{children}</div>;
   }
 

@@ -2,6 +2,17 @@ export type TrustLevel = "TIER_1_LAB" | "TIER_1_ACADEMIC" | "TIER_2_TECH_PRESS" 
 
 export type DifficultyLevel = "Beginner" | "Intermediate" | "Advanced";
 
+export type TechnicalDepth = "accessible" | "intermediate" | "rigorous" | "all";
+
+export function normalizeTechnicalDepth(val?: string): TechnicalDepth {
+  if (!val) return "intermediate";
+  const lower = val.toLowerCase().trim();
+  if (lower === "accessible" || lower === "introductory" || lower === "beginner") return "accessible";
+  if (lower === "rigorous" || lower === "advanced") return "rigorous";
+  if (lower === "all") return "all";
+  return "intermediate";
+}
+
 export interface Source {
   id: string;
   name: string;
@@ -169,6 +180,20 @@ export interface PaperChunk {
   sectionTitle: string;
   content: string;
   keywords: string[];
+}
+
+
+export interface UserPreferences {
+  userId: string;
+  dailyGoalMinutes: number;
+  technicalDepth: TechnicalDepth;
+  interestedTopics: string[];
+  timezone: string;
+  morningBriefingTime: string;
+  weekendDigestEnabled: boolean;
+  desktopNotificationsEnabled: boolean;
+  soundEnabled: boolean;
+  updatedAt: string;
 }
 
 export interface UserProfile {

@@ -128,6 +128,7 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`relative px-3 lg:px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   isActive
                     ? "text-[var(--text-primary)] font-semibold"
@@ -212,6 +213,7 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
                       <Link
                         key={item.href}
                         href={item.href}
+                        prefetch={true}
                         role="menuitem"
                         onClick={() => setIsMoreOpen(false)}
                         className={`flex items-start gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors ${

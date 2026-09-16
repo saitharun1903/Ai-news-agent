@@ -1,14 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  pageVariants,
-  reducedPageVariants,
-  staggerContainer as defaultStaggerContainer,
-  staggerItem as defaultStaggerItem,
-} from "@/lib/motion";
+import { useReducedMotion } from "framer-motion";
 
 // Global in-memory scroll restoration registry for SPA routes
 const scrollRegistry = new Map<string, number>();
@@ -18,6 +12,19 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const shouldReduceMotion = useReducedMotion();
   const isPopStateRef = useRef(false);
   const prevPathnameRef = useRef<string>(pathname);
+  const [animClass, setAnimClass] = useState("page-enter-mobile");
+
+  // Determine responsive motion class on client mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const updateClass = () => {
+        setAnimClass(window.innerWidth < 768 ? "page-enter-mobile" : "page-enter-desktop");
+      };
+      updateClass();
+      window.addEventListener("resize", updateClass, { passive: true });
+      return () => window.removeEventListener("resize", updateClass);
+    }
+  }, []);
 
   // Track popstate (browser Back / Forward navigation)
   useEffect(() => {
@@ -36,20 +43,19 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
     }
 
     if (isPopStateRef.current) {
-      // Back / Forward navigation: restore saved scroll position
       const savedY = scrollRegistry.get(pathname) ?? 0;
       requestAnimationFrame(() => {
         window.scrollTo({ top: savedY, behavior: "instant" });
       });
       isPopStateRef.current = false;
     } else {
-      // Intentional new forward navigation: start at top
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
 
     prevPathnameRef.current = pathname;
   }, [pathname]);
 
+  // If prefers-reduced-motion is requested: immediate static render
   if (shouldReduceMotion) {
     return (
       <div key={pathname} className="w-full">
@@ -59,55 +65,21 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="w-full"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div key={pathname} className={`w-full ${animClass}`}>
+      {children}
+    </div>
   );
 }
 
 export function StaggerContainer({
   children,
   className = "",
-  staggerDelay = 0.04,
 }: {
   children: React.ReactNode;
   className?: string;
   staggerDelay?: number;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-
-  if (shouldReduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            staggerChildren: staggerDelay,
-            delayChildren: 0.02,
-          },
-        },
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+  return <div className={className}>{children}</div>;
 }
 
 export function StaggerItem({
@@ -117,19 +89,5 @@ export function StaggerItem({
   children: React.ReactNode;
   className?: string;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-
-  if (shouldReduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <motion.div
-      variants={defaultStaggerItem}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+  return <div className={className}>{children}</div>;
 }
-

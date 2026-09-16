@@ -40,6 +40,7 @@ export interface DayReadingSummary {
   papersCompleted: number;
   metGoal: boolean;
   qualifiesForStreak: boolean;
+  goalMinutes?: number;
 }
 
 export interface StreakResult {
@@ -56,10 +57,12 @@ export interface StreakResult {
 export function getDailyActivityMap(
   sessions: ReadingSession[],
   dailyGoalMinutes: number = 25,
-  timezone: string = "Asia/Kolkata"
+  timezone: string = "Asia/Kolkata",
+  historicalGoalsMap?: Map<string, number> | Record<string, number>
 ): Map<string, DayReadingSummary> {
   const map = new Map<string, DayReadingSummary>();
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const todayStr = getLocalDateString(new Date(), timezone);
 
   for (const session of sessions) {
     const localDate = getLocalDateString(session.startedAt || session.lastUpdatedAt, timezone);
@@ -72,6 +75,7 @@ export function getDailyActivityMap(
       papersCompleted: 0,
       metGoal: false,
       qualifiesForStreak: false,
+      goalMinutes: dailyGoalMinutes,
     };
 
     existing.seconds += session.timeSpentSeconds || 0;
@@ -81,13 +85,29 @@ export function getDailyActivityMap(
     map.set(localDate, existing);
   }
 
-  const qualifyingThresholdSeconds = dailyGoalMinutes * 60;
   for (const [dateStr, item] of map.entries()) {
     const [year, month, day] = dateStr.split("-").map(Number);
     const d = new Date(year, month - 1, day);
     item.dayOfWeek = d.getDay();
     item.day = dayNames[item.dayOfWeek];
     item.minutes = Math.round(item.seconds / 60);
+
+    // Determine goal for this specific date:
+    // Today always evaluates against user's active dailyGoalMinutes.
+    // Historical dates use their recorded goal if present; otherwise fallback to dailyGoalMinutes.
+    let applicableGoal = dailyGoalMinutes;
+    if (dateStr !== todayStr && historicalGoalsMap) {
+      const hist =
+        historicalGoalsMap instanceof Map
+          ? historicalGoalsMap.get(dateStr)
+          : historicalGoalsMap[dateStr];
+      if (typeof hist === "number" && hist > 0) {
+        applicableGoal = hist;
+      }
+    }
+    item.goalMinutes = applicableGoal;
+
+    const qualifyingThresholdSeconds = applicableGoal * 60;
     item.metGoal = item.seconds >= qualifyingThresholdSeconds;
     item.qualifiesForStreak = item.seconds >= qualifyingThresholdSeconds;
   }
@@ -127,73 +147,52 @@ export function calculateStreaks(
     };
   }
 
-  const qualifyingSet = new Set(qualifyingDates);
-  const lastCompletedDate = qualifyingDates[qualifyingDates.length - 1];
-
-  // 1. Longest streak across history
+  // Calculate longest streak across history
   let longest = 0;
-  let currentRun = 0;
-  let prevDate: Date | null = null;
+  let tempStreak = 0;
+  let prevTimestamp: number | null = null;
 
   for (const dateStr of qualifyingDates) {
     const [y, m, d] = dateStr.split("-").map(Number);
-    const curr = new Date(Date.UTC(y, m - 1, d));
-
-    if (prevDate) {
-      const diffDays = Math.round((curr.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays === 1) {
-        currentRun += 1;
-      } else {
-        currentRun = 1;
-      }
+    const ts = Date.UTC(y, m - 1, d);
+    if (prevTimestamp === null) {
+      tempStreak = 1;
     } else {
-      currentRun = 1;
+      const diffDays = Math.round((ts - prevTimestamp) / (24 * 60 * 60 * 1000));
+      if (diffDays === 1) {
+        tempStreak += 1;
+      } else if (diffDays > 1) {
+        tempStreak = 1;
+      }
     }
-
-    if (currentRun > longest) {
-      longest = currentRun;
-    }
-    prevDate = curr;
+    prevTimestamp = ts;
+    if (tempStreak > longest) longest = tempStreak;
   }
 
-  // 2. Current streak in user timezone
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = getLocalDateString(yesterday, timezone);
+  // Calculate current active streak evaluated against today's local date
+  const [ty, tm, td] = todayStr.split("-").map(Number);
+  const todayMidnight = new Date(Date.UTC(ty, tm - 1, td));
 
   let currentStreak = 0;
+  const dateSet = new Set(qualifyingDates);
 
-  if (qualifyingSet.has(todayStr)) {
-    // Today qualified! Count today + consecutive days before today
-    currentStreak = 1;
-    let checkDate = new Date();
-    while (true) {
-      checkDate.setDate(checkDate.getDate() - 1);
-      const checkStr = getLocalDateString(checkDate, timezone);
-      if (qualifyingSet.has(checkStr)) {
-        currentStreak += 1;
-      } else {
-        break;
-      }
-    }
-  } else if (qualifyingSet.has(yesterdayStr)) {
-    // Yesterday qualified, and today is still in progress (not yet qualified).
-    // The streak from yesterday remains active!
-    currentStreak = 1;
-    let checkDate = new Date(yesterday);
-    while (true) {
-      checkDate.setDate(checkDate.getDate() - 1);
-      const checkStr = getLocalDateString(checkDate, timezone);
-      if (qualifyingSet.has(checkStr)) {
-        currentStreak += 1;
-      } else {
-        break;
-      }
-    }
-  } else {
-    // Neither today nor yesterday qualified -> streak has broken
-    currentStreak = 0;
+  let checkDate = new Date(todayMidnight);
+  if (!todayQualified) {
+    // If today is not yet qualified, check if yesterday was qualified to preserve streak window
+    checkDate.setUTCDate(checkDate.getUTCDate() - 1);
   }
+
+  while (true) {
+    const checkStr = checkDate.toISOString().split("T")[0];
+    if (dateSet.has(checkStr)) {
+      currentStreak += 1;
+      checkDate.setUTCDate(checkDate.getUTCDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  const lastCompletedDate = qualifyingDates[qualifyingDates.length - 1] || null;
 
   return {
     currentStreak,

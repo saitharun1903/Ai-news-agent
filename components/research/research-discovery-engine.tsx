@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Paper } from "@/lib/db/types";
+import { Paper, UserProfile } from "@/lib/db/types";
 import {
   Search,
   BookOpen,
@@ -24,9 +24,11 @@ import {
 interface ResearchDiscoveryEngineProps {
   initialPapers: Paper[];
   initialTab?: string;
+  userProfile?: UserProfile;
 }
 
-export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending" }: ResearchDiscoveryEngineProps) {
+export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending", userProfile }: ResearchDiscoveryEngineProps) {
+
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("all");
@@ -88,7 +90,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
 
   // Filtering logic
   const filteredPapers = useMemo(() => {
-    return initialPapers.filter((p) => {
+    const list = initialPapers.filter((p) => {
       // Tab filter
       if (activeTab === "trending") {
         if (p.discoveryCategory !== "trending" && (p.upvotes || 0) < 50) return false;
@@ -135,6 +137,37 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
 
       return true;
     });
+
+    if (activeTab === "recommended" || activeTab === "for-you") {
+      const userTopics = (userProfile?.interestedTopics || []).map((t) => t.toLowerCase());
+      const depth = (userProfile?.difficultyPreference || "intermediate").toLowerCase();
+
+      list.sort((a, b) => {
+        let scoreA = (a.upvotes || 0) * 2 + (a.citationCount || 0);
+        let scoreB = (b.upvotes || 0) * 2 + (b.citationCount || 0);
+
+        const aCats = [a.primaryCategory, ...(a.categories || [])].map((t) => (t || "").toLowerCase());
+        const bCats = [b.primaryCategory, ...(b.categories || [])].map((t) => (t || "").toLowerCase());
+
+        if (userTopics.some((ut) => aCats.some((c) => c.includes(ut) || ut.includes(c)))) scoreA += 80;
+        if (userTopics.some((ut) => bCats.some((c) => c.includes(ut) || ut.includes(c)))) scoreB += 80;
+
+        const aDiff = (a.difficulty || "intermediate").toLowerCase();
+        const bDiff = (b.difficulty || "intermediate").toLowerCase();
+
+        if (depth.includes("beginner") || depth.includes("accessible") || depth.includes("introductory")) {
+          if (aDiff === "beginner") scoreA += 50;
+          if (bDiff === "beginner") scoreB += 50;
+        } else if (depth.includes("advanced") || depth.includes("rigorous")) {
+          if (aDiff === "advanced") scoreA += 50;
+          if (bDiff === "advanced") scoreB += 50;
+        }
+
+        return scoreB - scoreA;
+      });
+    }
+
+    return list;
   }, [
     initialPapers,
     activeTab,
@@ -144,6 +177,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
     filterHasCode,
     filterHasPdf,
     filterHasDataset,
+    userProfile,
   ]);
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserProfile } from "@/lib/db/types";
 import { siteConfig } from "@/config/site";
 import {
@@ -22,6 +22,8 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  RefreshCw,
+  Info,
 } from "lucide-react";
 
 interface SettingsAnalytics {
@@ -60,11 +62,29 @@ const COMMON_TIMEZONES = [
 export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewProps) {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [analytics, setAnalytics] = useState<SettingsAnalytics | undefined>(initialAnalytics);
+  const [previousProfile, setPreviousProfile] = useState<UserProfile>(initialProfile);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [browserPermission, setBrowserPermission] = useState<string>("default");
+
+  // Check browser notification permission on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setBrowserPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestBrowserPermission = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setBrowserPermission(perm);
+      } catch {}
+    }
+  };
 
   const memberSinceFormatted = React.useMemo(() => {
     if (!profile.createdAt) return "September 2026";
@@ -98,31 +118,51 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
     if (e) e.preventDefault();
     setIsSaving(true);
     setErrorMessage("");
+
+    // Store snapshot for optimistic rollback
+    const rollbackSnapshot = { ...profile };
+    setPreviousProfile(rollbackSnapshot);
+
     try {
-      const res = await fetch("/api/profile", {
+      // 1. Update preferences via validated API
+      const res = await fetch("/api/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dailyGoalMinutes: Number(profile.dailyGoalMinutes) || 25,
+          technicalDepth: profile.difficultyPreference,
+          interestedTopics: profile.interestedTopics,
+          timezone: profile.timezone || "Asia/Kolkata",
+          morningBriefingTime: profile.morningBriefingTime || "08:30",
+          weekendDigestEnabled: profile.weekendNotificationsEnabled,
+          desktopNotificationsEnabled: profile.desktopNotificationsEnabled,
+          soundEnabled: profile.soundEnabled,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Couldn't save your preferences.");
+      }
+
+      // Also persist user name/email/bio if changed
+      await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: profile.name,
           email: profile.email,
           bio: profile.bio,
-          timezone: profile.timezone || "Asia/Kolkata",
-          morningBriefingTime: profile.morningBriefingTime,
+          timezone: profile.timezone,
           dailyGoalMinutes: Number(profile.dailyGoalMinutes) || 25,
           difficultyPreference: profile.difficultyPreference,
+          interestedTopics: profile.interestedTopics,
+          morningBriefingTime: profile.morningBriefingTime,
           desktopNotificationsEnabled: profile.desktopNotificationsEnabled,
           weekendNotificationsEnabled: profile.weekendNotificationsEnabled,
           soundEnabled: profile.soundEnabled,
-          interestedTopics: profile.interestedTopics,
         }),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to save profile");
-      }
-
-      const updated = await res.json();
-      setProfile(updated);
 
       // Refresh analytics in background to keep daily goal / timezone calculations in sync
       fetch("/api/insights/summary")
@@ -136,8 +176,9 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err.message || "Failed to save profile changes");
-      setTimeout(() => setErrorMessage(""), 4000);
+      // Roll back to previous snapshot
+      setProfile(rollbackSnapshot);
+      setErrorMessage(err.message || "Couldn't save your preferences.");
     } finally {
       setIsSaving(false);
     }
@@ -160,7 +201,6 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
       setExportMessage("Complete reading archive exported successfully");
       setTimeout(() => setExportMessage(""), 3500);
     } catch (err) {
-      // Fallback client-side snapshot
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(profile, null, 2));
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", dataStr);
@@ -179,9 +219,9 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
   const longestVal = profile.longestStreak ?? analytics?.longestStreak ?? 0;
   const papersVal = profile.papersReadCount ?? analytics?.papersRead ?? 0;
   const todayMins = analytics?.todayMinutes ?? 0;
-  const dailyGoal = profile.dailyGoalMinutes || 25;
+  const dailyGoal = Number(profile.dailyGoalMinutes) || 25;
   const progressPct = Math.min(100, Math.round((todayMins / dailyGoal) * 100));
-  const isGoalMetToday = todayMins >= dailyGoal || analytics?.todayQualified;
+  const isGoalMetToday = todayMins >= dailyGoal || (analytics?.todayQualified && todayMins >= dailyGoal);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 font-sans pb-16">
@@ -298,7 +338,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
               {papersVal}
             </div>
             <div className="mt-2 text-[11px] text-[var(--text-muted)] truncate">
-              Completed research papers
+              Completed preprints
             </div>
           </div>
         </div>
@@ -335,14 +375,26 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
       {saved && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-900 flex items-center gap-2 shadow-xs transition-all">
           <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-          <span className="font-medium">Profile preferences saved successfully</span>
+          <span className="font-medium">Preferences saved and synchronized successfully</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-900 flex items-center gap-2 shadow-xs transition-all">
-          <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
-          <span className="font-medium">{errorMessage}</span>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-900 flex items-start justify-between gap-3 shadow-xs transition-all">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">{errorMessage}</p>
+              <p className="text-[11px] text-red-700 mt-0.5">Your changes were not applied to the database.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSave()}
+            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shrink-0"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -420,7 +472,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                 ))}
               </select>
               <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
-                Reading streaks evaluate against your configured timezone&apos;s midnight calendar day.
+                Daily reading streaks and snapshots evaluate strictly against your local midnight calendar boundary.
               </p>
             </div>
           </div>
@@ -439,7 +491,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
             {/* Daily Goal */}
             <div>
               <label className="font-medium text-[var(--text-primary)] block mb-2">
-                Daily Reading Goal (Minutes to Qualify Streak)
+                Daily Reading Goal (Streak Threshold)
               </label>
               <div className="flex items-center gap-2">
                 {[15, 25, 45, 60].map((mins) => (
@@ -448,7 +500,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                     type="button"
                     onClick={() => setProfile({ ...profile, dailyGoalMinutes: mins })}
                     className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                      profile.dailyGoalMinutes === mins
+                      Number(profile.dailyGoalMinutes) === mins
                         ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-2xs"
                         : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--accent)]"
                     }`}
@@ -458,7 +510,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                 ))}
               </div>
               <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
-                You must accumulate at least this duration in an active calendar day to complete your streak.
+                You must accumulate at least this duration in an active day to qualify for a streak.
               </p>
             </div>
 
@@ -467,29 +519,37 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
               <label className="font-medium text-[var(--text-primary)] block mb-2">
                 Technical Depth Preference
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {[
                   { id: "accessible", label: "Introductory" },
                   { id: "intermediate", label: "Balanced" },
                   { id: "rigorous", label: "Advanced" },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setProfile({ ...profile, difficultyPreference: opt.id as any })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                      profile.difficultyPreference === opt.id ||
-                      (opt.id === "intermediate" && !["accessible", "rigorous"].includes(profile.difficultyPreference as any))
-                        ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-2xs"
-                        : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--accent)]"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                  { id: "all", label: "All preprints" },
+                ].map((opt) => {
+                  const currentNorm = (profile.difficultyPreference || "intermediate").toLowerCase();
+                  const isSelected =
+                    currentNorm === opt.id ||
+                    (opt.id === "accessible" && currentNorm === "beginner") ||
+                    (opt.id === "rigorous" && currentNorm === "advanced");
+
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setProfile({ ...profile, difficultyPreference: opt.id as any })}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                        isSelected
+                          ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-2xs"
+                          : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:border-[var(--accent)]"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
               <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
-                Calibrates recommended preprints and AI executive summaries.
+                Steers recommended preprints, Paper of the Day, and AI executive summaries.
               </p>
             </div>
           </div>
@@ -497,7 +557,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
           {/* Topics */}
           <div className="pt-2">
             <label className="font-medium text-xs text-[var(--text-primary)] block mb-2">
-              Curated Research Topics
+              Curated Research Topics (Prioritizes Recommended &amp; For You Feeds)
             </label>
             <div className="flex flex-wrap gap-1.5">
               {siteConfig.topics.map((t) => {
@@ -518,6 +578,9 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                 );
               })}
             </div>
+            <p className="text-[11px] text-[var(--text-muted)] mt-2">
+              General research browsing remains open to all topics, but personalized recommendation tabs will prioritize these selections.
+            </p>
           </div>
         </section>
 
@@ -542,24 +605,51 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                 className="rounded-xl border border-[var(--border)] bg-white px-3.5 py-1.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] shadow-2xs"
               />
               <p className="text-[11px] text-[var(--text-muted)] mt-1">
-                Prepares fresh research briefings for your morning routine.
+                Prepares fresh research briefings for your morning routine at your configured time.
               </p>
             </div>
 
             <div className="space-y-3 pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={profile.desktopNotificationsEnabled}
-                  onChange={(e) =>
-                    setProfile({ ...profile, desktopNotificationsEnabled: e.target.checked })
-                  }
-                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] h-4 w-4"
-                />
-                <span className="font-medium text-[var(--text-primary)] text-xs">
-                  Desktop notification alerts
-                </span>
-              </label>
+              <div>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profile.desktopNotificationsEnabled}
+                    onChange={(e) =>
+                      setProfile({ ...profile, desktopNotificationsEnabled: e.target.checked })
+                    }
+                    className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] h-4 w-4"
+                  />
+                  <span className="font-medium text-[var(--text-primary)] text-xs">
+                    Desktop notification alerts
+                  </span>
+                </label>
+
+                {/* Browser permission status indicator */}
+                {profile.desktopNotificationsEnabled && (
+                  <div className="mt-2 pl-6">
+                    {browserPermission === "granted" ? (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        <Check className="h-3 w-3 text-emerald-600" />
+                        Browser notification permission granted
+                      </span>
+                    ) : browserPermission === "denied" ? (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                        <AlertCircle className="h-3 w-3 text-amber-600" />
+                        Blocked by browser. Enable notifications in site settings.
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={requestBrowserPermission}
+                        className="inline-flex items-center gap-1 text-[11px] text-[var(--accent)] font-medium underline"
+                      >
+                        Grant browser permission for alerts &rarr;
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
@@ -571,7 +661,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
                   className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] h-4 w-4"
                 />
                 <span className="font-medium text-[var(--text-primary)] text-xs">
-                  Include weekend research digests
+                  Include weekend research digests (Sat &amp; Sun)
                 </span>
               </label>
             </div>
@@ -652,7 +742,7 @@ export function SettingsView({ initialProfile, initialAnalytics }: SettingsViewP
             {isSaving ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Saving profile...</span>
+                <span>Saving preferences...</span>
               </>
             ) : (
               <>

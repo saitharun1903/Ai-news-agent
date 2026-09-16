@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { modalVariants, backdropVariants } from "@/lib/motion";
 import {
   Search,
   FileText,
@@ -87,8 +89,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return () => clearTimeout(timer);
   }, [query]);
 
-  if (!isOpen) return null;
-
   const handleSelect = (url: string) => {
     onClose();
     router.push(url);
@@ -102,11 +102,26 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     results.authors.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 bg-[var(--text-primary)]/30 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div
-        className="w-full max-w-2xl rounded-3xl border border-[var(--border)] bg-white shadow-modal overflow-hidden font-sans"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="command-palette-backdrop"
+          variants={backdropVariants}
+          initial="closed"
+          animate="open"
+          exit="closed"
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 bg-[var(--text-primary)]/40 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto"
+        >
+          <motion.div
+            key="command-palette-panel"
+            variants={modalVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            className="w-full max-w-2xl rounded-3xl border border-[var(--border)] bg-white shadow-modal overflow-hidden font-sans my-auto sm:my-0"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Search Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)]">
           <Search className="h-4 w-4 text-[var(--accent)] shrink-0" />
@@ -316,7 +331,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <span>Search live arXiv, Hugging Face, Lab RSS &amp; GitHub</span>
           <span>Press ESC to close</span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
   );
 }

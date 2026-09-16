@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] flex flex-col font-sans antialiased selection:bg-blue-600/15 selection:text-blue-900">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[var(--background)] text-[var(--text-primary)] flex flex-col font-sans antialiased selection:bg-blue-600/15 selection:text-blue-900 relative">
       {/* Top Application Navbar */}
       <AppNavbar
         onOpenSearch={() => setCommandOpen(true)}
@@ -25,8 +25,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       />
 
-      {/* Main Centered Content Workspace */}
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20 md:pb-12">
+      {/* Main Responsive Content Workspace */}
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-28 md:pb-12">
         <PageTransition>{children}</PageTransition>
       </main>
 

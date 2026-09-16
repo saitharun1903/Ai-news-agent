@@ -118,7 +118,8 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors shadow-xs"
+              className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors shadow-xs touch-target active:scale-95"
+              aria-label="Share paper"
             >
               {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Share2 className="h-3.5 w-3.5" />}
               <span>{copied ? "Copied" : "Share"}</span>
@@ -127,11 +128,12 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
             {/* Reading List Queue */}
             <button
               onClick={handleSave}
-              className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-mono transition-colors shadow-xs ${
+              className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-mono transition-colors shadow-xs touch-target active:scale-95 ${
                 saved
                   ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-white"
                   : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
               }`}
+              aria-label="Queue in reading list"
             >
               <Bookmark className={`h-3.5 w-3.5 ${saved ? "fill-current" : ""}`} />
               <span>{saved ? "Queued" : "Queue"}</span>
@@ -140,11 +142,12 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
             {/* Permanent Favorite */}
             <button
               onClick={handleFavorite}
-              className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-mono transition-colors shadow-xs ${
+              className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-mono transition-colors shadow-xs touch-target active:scale-95 ${
                 favorited
                   ? "border-rose-200 bg-rose-50 text-rose-600"
                   : "border-[var(--border)] bg-white text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50/50"
               }`}
+              aria-label="Save to favorites"
             >
               <Heart className={`h-3.5 w-3.5 ${favorited ? "fill-rose-500 text-rose-500" : ""}`} />
               <span>{favorited ? "Favorited" : "Favorite"}</span>
@@ -153,7 +156,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] leading-tight">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] leading-snug">
           {paper.title}
         </h1>
 
@@ -182,7 +185,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
         <div className="pt-2 flex flex-wrap items-center gap-2">
           <Link
             href={`/reader/${paper.id}`}
-            className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-xs font-semibold flex items-center gap-2 transition-colors shadow-sm"
+            className="px-4 py-2.5 rounded-xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-xs font-semibold flex items-center gap-2 transition-colors shadow-sm touch-target active:scale-95"
           >
             <BookOpen className="h-4 w-4 text-[var(--accent)]" />
             <span>Open in Paper Reader</span>
@@ -193,7 +196,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
               href={paper.pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs touch-target active:scale-95"
             >
               <FileText className="h-3.5 w-3.5 text-rose-500" />
               <span>Original PDF ↗</span>
@@ -205,7 +208,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
               href={paper.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs touch-target active:scale-95"
             >
               <GitBranch className="h-3.5 w-3.5 text-indigo-600" />
               <span>Code Repository ↗</span>
@@ -217,7 +220,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
               href={paper.projectUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs touch-target active:scale-95"
             >
               <Globe className="h-3.5 w-3.5 text-[var(--accent)]" />
               <span>Project Page ↗</span>
@@ -229,7 +232,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
               href={paper.datasetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs touch-target active:scale-95"
             >
               <Database className="h-3.5 w-3.5 text-amber-600" />
               <span>Dataset ↗</span>
@@ -241,7 +244,7 @@ export function PaperDetailView({ paper, relatedPapers }: PaperDetailViewProps) 
               href={paper.doiUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1.5 transition-colors shadow-xs touch-target active:scale-95"
             >
               <Link2 className="h-3.5 w-3.5 text-emerald-600" />
               <span>Publication DOI ↗</span>

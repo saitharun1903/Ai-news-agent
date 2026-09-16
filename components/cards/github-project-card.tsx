@@ -79,7 +79,7 @@ export function GithubProjectCard({ project }: GithubProjectCardProps) {
 
             <button
               onClick={handleFavorite}
-              className={`p-1.5 rounded-xl border transition-colors ${
+              className={`p-2 rounded-xl border transition-all active:scale-95 touch-target ${
                 favorited
                   ? "border-rose-200 bg-rose-50 text-rose-600"
                   : "border-[var(--border)] bg-white text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-50/50"
@@ -134,7 +134,7 @@ export function GithubProjectCard({ project }: GithubProjectCardProps) {
             href={project.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[var(--text-primary)] hover:bg-[var(--accent)] text-xs font-semibold text-white transition-all shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[var(--text-primary)] hover:bg-[var(--accent)] text-xs font-semibold text-white transition-transform active:scale-95 touch-target shadow-xs"
           >
             <span>Open GitHub</span>
             <ExternalLink className="h-3 w-3" />

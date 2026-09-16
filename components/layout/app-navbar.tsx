@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { dropdownVariants } from "@/lib/motion";
 import {
   Search,
   Bookmark,
@@ -100,19 +102,19 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
         hasScrolled ? "shadow-navbar" : ""
       }`}
     >
-      <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-[1400px] w-full mx-auto px-3 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3">
         {/* Left: Brand Identity */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <Link
             href="/"
-            className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg py-1"
+            className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg py-1 touch-target"
             aria-label="ResearchPulse Home"
           >
-            <div className="h-8 w-8 rounded-lg bg-[var(--text-primary)] text-white flex items-center justify-center font-bold text-xs tracking-tight shadow-xs group-hover:bg-[var(--accent)] transition-colors">
+            <div className="h-8 w-8 rounded-lg bg-[var(--text-primary)] text-white flex items-center justify-center font-bold text-xs tracking-tight shadow-xs group-hover:bg-[var(--accent)] transition-colors shrink-0">
               RP
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold text-[15px] tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
+              <span className="font-semibold text-sm sm:text-[15px] tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
                 ResearchPulse
               </span>
             </div>
@@ -122,7 +124,7 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
         {/* Center: Primary Horizontal Navigation + More Dropdown */}
         <nav
           aria-label="Primary Navigation"
-          className="hidden md:flex items-center gap-1 bg-[var(--surface-soft)] p-1 rounded-xl border border-[var(--border)]"
+          className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-[var(--surface-soft)] p-1 rounded-xl border border-[var(--border)]"
         >
           {primaryNavItems.map((item) => {
             const isActive = item.match(pathname);
@@ -130,15 +132,28 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 rounded-lg text-xs transition-all font-medium ${
+                className={`relative px-3 lg:px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   isActive
-                    ? "bg-white text-[var(--text-primary)] font-semibold shadow-2xs"
+                    ? "text-[var(--text-primary)] font-semibold"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                {item.label}
+                {/* Smooth shared active pill background */}
                 {isActive && (
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-[var(--accent)]" />
+                  <motion.span
+                    layoutId="navbar-active-pill"
+                    className="absolute inset-0 rounded-lg bg-white shadow-2xs z-0"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10">{item.label}</span>
+                {/* Active accent dot indicator */}
+                {isActive && (
+                  <motion.span
+                    layoutId="navbar-active-dot"
+                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-[var(--accent)] z-10"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  />
                 )}
               </Link>
             );
@@ -151,64 +166,87 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
               onClick={() => setIsMoreOpen((prev) => !prev)}
               aria-expanded={isMoreOpen}
               aria-haspopup="true"
-              className={`relative flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-all font-medium ${
+              className={`relative flex items-center gap-1 px-2.5 lg:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 isSecondaryActive
-                  ? "bg-white text-[var(--text-primary)] font-semibold shadow-2xs"
+                  ? "text-[var(--text-primary)] font-semibold"
                   : isMoreOpen
                   ? "bg-white/80 text-[var(--text-primary)]"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <span>More</span>
+              {isSecondaryActive && (
+                <motion.span
+                  layoutId="navbar-active-pill"
+                  className="absolute inset-0 rounded-lg bg-white shadow-2xs z-0"
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                />
+              )}
+              <span className="relative z-10">More</span>
               <ChevronDown
-                className={`h-3 w-3 text-[var(--text-muted)] transition-transform duration-150 ${
+                className={`h-3 w-3 text-[var(--text-muted)] transition-transform duration-150 relative z-10 ${
                   isMoreOpen ? "rotate-180" : ""
                 }`}
               />
               {isSecondaryActive && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-[var(--accent)]" />
+                <motion.span
+                  layoutId="navbar-active-dot"
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-[var(--accent)] z-10"
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                />
               )}
             </button>
 
-            {isMoreOpen && (
-              <div
-                role="menu"
-                className="absolute left-0 mt-2 w-64 rounded-xl border border-[var(--border)] bg-white p-1.5 shadow-lg animate-in fade-in-0 zoom-in-95 z-50 font-sans"
-              >
-                <div className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                  Workspace
-                </div>
-                {secondaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.match(pathname);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      role="menuitem"
-                      onClick={() => setIsMoreOpen(false)}
-                      className={`flex items-start gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors ${
-                        isActive
-                          ? "bg-[var(--surface-soft)] text-[var(--text-primary)] font-semibold"
-                          : "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
-                      }`}
-                    >
-                      <div className={`p-1.5 rounded-md mt-0.5 ${
-                        isActive ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-soft)] text-[var(--text-muted)]"
-                      }`}>
-                        <Icon className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-[var(--text-primary)]">{item.label}</span>
-                        <span className="text-[11px] text-[var(--text-muted)] leading-tight font-normal">
-                          {item.description}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+            <AnimatePresence>
+              {isMoreOpen && (
+                <motion.div
+                  role="menu"
+                  variants={dropdownVariants}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className="absolute left-0 mt-2 w-64 rounded-xl border border-[var(--border)] bg-white p-1.5 shadow-lg z-50 font-sans"
+                >
+                  <div className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                    Workspace
+                  </div>
+                  {secondaryNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.match(pathname);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setIsMoreOpen(false)}
+                        className={`flex items-start gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors ${
+                          isActive
+                            ? "bg-[var(--surface-soft)] text-[var(--text-primary)] font-semibold"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
+                        }`}
+                      >
+                        <div
+                          className={`p-1.5 rounded-md mt-0.5 ${
+                            isActive
+                              ? "bg-[var(--accent)] text-white"
+                              : "bg-[var(--surface-soft)] text-[var(--text-muted)]"
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {item.label}
+                          </span>
+                          <span className="text-[11px] text-[var(--text-muted)] leading-tight font-normal">
+                            {item.description}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </nav>
 

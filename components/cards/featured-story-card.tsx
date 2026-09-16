@@ -73,13 +73,13 @@ export function FeaturedStoryCard({ story, onFavoriteToggle }: FeaturedStoryCard
 
   return (
     <MotionCard3D
-      maxTilt={2.5}
-      translateZ={8}
-      className="rounded-3xl border border-[var(--border)] bg-white p-6 sm:p-8 shadow-sm hover:shadow-card-hover transition-all duration-300 relative overflow-hidden group"
+      maxTilt={1.5}
+      translateZ={4}
+      className="rounded-3xl border border-[var(--border)] bg-white p-4 sm:p-6 lg:p-8 shadow-xs hover:shadow-card transition-all duration-200 relative overflow-hidden group"
     >
       <div className="relative z-10 space-y-4">
         {/* Layer 1: Metadata Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs font-sans">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent-soft)] border border-[var(--border)] text-[var(--accent)] font-semibold text-xs tracking-wide">
               <Sparkles className="h-3 w-3" />
@@ -99,12 +99,13 @@ export function FeaturedStoryCard({ story, onFavoriteToggle }: FeaturedStoryCard
             {/* Save to Permanent Favorites */}
             <button
               onClick={handleFavoriteClick}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`p-2.5 rounded-xl border transition-all touch-target active:scale-95 ${
                 isFavorited
                   ? "bg-red-50 border-red-200 text-red-600 shadow-xs"
                   : "border-[var(--border)] bg-white text-[var(--text-muted)] hover:text-red-500 hover:border-red-200 hover:bg-red-50/50"
               }`}
               title={isFavorited ? "Remove from Favorites" : "Save to Permanent Favorites"}
+              aria-label="Save to favorites"
             >
               <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
             </button>
@@ -112,8 +113,9 @@ export function FeaturedStoryCard({ story, onFavoriteToggle }: FeaturedStoryCard
             {/* Share Link */}
             <button
               onClick={handleShare}
-              className="p-2 rounded-xl border border-[var(--border)] bg-white text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
+              className="p-2.5 rounded-xl border border-[var(--border)] bg-white text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all touch-target active:scale-95"
               title="Copy share link"
+              aria-label="Copy share link"
             >
               {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Share2 className="h-4 w-4" />}
             </button>

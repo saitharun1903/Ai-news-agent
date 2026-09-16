@@ -190,7 +190,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
           {/* Primary Action: Read in Reader */}
           <Link
             href={`/reader/${paper.id}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent)] text-xs font-semibold transition-all shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent)] text-xs font-semibold transition-transform active:scale-95 touch-target shadow-xs"
           >
             <BookOpen className="h-3.5 w-3.5 text-[var(--accent)]" />
             <span>Read Paper</span>
@@ -202,7 +202,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
               href={paper.pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-colors bg-white shadow-xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-all active:scale-95 touch-target bg-white shadow-xs"
               title="Open arXiv PDF in new tab"
             >
               <FileText className="h-3.5 w-3.5 text-rose-500" />
@@ -216,7 +216,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
               href={paper.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-colors bg-white shadow-xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-all active:scale-95 touch-target bg-white shadow-xs"
               title="Open verified GitHub repository"
             >
               <Github className="h-3.5 w-3.5" />
@@ -230,7 +230,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
               href={paper.projectUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-colors bg-white shadow-xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-all active:scale-95 touch-target bg-white shadow-xs"
               title="Open verified project page"
             >
               <Globe className="h-3.5 w-3.5 text-[var(--accent)]" />
@@ -244,7 +244,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
               href={paper.datasetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-colors bg-white shadow-xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-all active:scale-95 touch-target bg-white shadow-xs"
               title="Open verified dataset"
             >
               <Database className="h-3.5 w-3.5 text-amber-600" />
@@ -258,7 +258,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
               href={paper.doiUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-colors bg-white shadow-xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-medium transition-all active:scale-95 touch-target bg-white shadow-xs"
               title="Open official DOI publication"
             >
               <Link2 className="h-3.5 w-3.5 text-emerald-600" />
@@ -269,7 +269,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
           {/* Reading Queue Toggle */}
           <button
             onClick={handleBookmark}
-            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95 touch-target ${
               bookmarked
                 ? "bg-[var(--text-primary)] text-white"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
@@ -283,7 +283,7 @@ export function ZeroClickResearchCard({ paper, featured = false }: ZeroClickRese
           {/* Permanent Favorite Heart Toggle */}
           <button
             onClick={handleFavorite}
-            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95 touch-target ${
               favorited
                 ? "bg-rose-50 text-rose-600 border border-rose-200"
                 : "text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-50/50"

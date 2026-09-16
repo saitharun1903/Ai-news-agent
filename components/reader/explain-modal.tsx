@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Sparkles, X, ChevronRight, BookOpen } from "lucide-react";
 import { PrerequisiteConcept } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
+import { modalVariants, backdropVariants } from "@/lib/motion";
 
 interface ExplainModalProps {
   paperTitle: string;
@@ -24,40 +26,57 @@ export function ExplainBeforeYouReadModal({
     prerequisites[0] || null
   );
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-sans">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-[var(--text-primary)]/40 backdrop-blur-xs" onClick={onClose} />
-
-      {/* Modal Card */}
-      <div className="relative w-full max-w-2xl rounded-2xl border border-[var(--border)] bg-white p-6 shadow-2xl transition-all overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-[var(--surface-soft)]">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200">
-                <Sparkles className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 font-mono">
-                Explain Before You Read
-              </span>
-            </div>
-            <h3 className="mt-1 text-base sm:text-lg font-bold text-[var(--text-primary)] line-clamp-1">
-              Prerequisites for &ldquo;{paperTitle}&rdquo;
-            </h3>
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-              Master the underlying concepts below to read this research paper with full comprehension.
-            </p>
-          </div>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans">
+          {/* Backdrop */}
+          <motion.div
+            variants={backdropVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
+          />
+
+          {/* Modal / Bottom Sheet Card */}
+          <motion.div
+            variants={modalVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            className="relative w-full max-w-2xl rounded-t-3xl sm:rounded-2xl border border-[var(--border)] bg-white p-5 sm:p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col z-10"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+            {/* Grab handle for mobile */}
+            <div className="sm:hidden w-12 h-1.5 rounded-full bg-slate-200 mx-auto mb-3" />
+
+            {/* Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-[var(--surface-soft)]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 font-mono">
+                    Explain Before You Read
+                  </span>
+                </div>
+                <h3 className="mt-1 text-base sm:text-lg font-bold text-[var(--text-primary)] line-clamp-1">
+                  Prerequisites for &ldquo;{paperTitle}&rdquo;
+                </h3>
+                <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                  Master the underlying concepts below to read this research paper with full comprehension.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="rounded-lg p-1.5 text-slate-400 hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] touch-target active:scale-95"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
         {/* Two-Column Concept Explorer */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 py-4 flex-1 overflow-y-auto">
@@ -167,7 +186,9 @@ export function ExplainBeforeYouReadModal({
             <span>Proceed to Paper Reader</span>
           </Button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

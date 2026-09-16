@@ -138,6 +138,49 @@
   background: rgba(100, 116, 139, 0.6);
 }
 
+/* Mobile & Touch UX Enhancements */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Safe area insets for iOS devices */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Prevent horizontal overflow globally */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+/* Desktop hover vs Touch tap separation */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+  }
+}
+
+@media (hover: none) {
+  /* On touch screens, disable hover transforms that feel sticky */
+  .hover-lift:hover {
+    transform: none;
+  }
+}
+
 /* Accessibility: Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

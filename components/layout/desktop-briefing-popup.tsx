@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, ArrowRight, BookOpen, Layers } from "lucide-react";
 import { MotionCard3D } from "@/components/motion/motion-card-3d";
+import { spring } from "@/lib/motion";
 
 interface DesktopBriefingPopupProps {
   onOpenFullBriefing?: () => void;
@@ -84,13 +85,13 @@ export function DesktopBriefingPopup({ onOpenFullBriefing }: DesktopBriefingPopu
       {isVisible && (
         <motion.aside
           aria-label="Desktop Daily Briefing"
-          initial={{ opacity: 0, y: 24, scale: 0.94 }}
+          initial={{ opacity: 0, y: 20, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.94 }}
-          transition={{ type: "spring", stiffness: 350, damping: 26 }}
-          className="fixed bottom-6 right-6 z-50 w-88 max-w-[calc(100vw-2rem)] font-sans"
+          exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          transition={spring.gentle}
+          className="hidden md:block fixed bottom-6 right-6 z-50 w-88 max-w-[calc(100vw-2rem)] font-sans"
         >
-          <MotionCard3D maxTilt={2.5} translateZ={8} className="rounded-3xl shadow-modal">
+          <MotionCard3D maxTilt={1.5} translateZ={8} className="rounded-3xl shadow-modal">
             <motion.div
               layoutId="daily-briefing-surface"
               className="rounded-3xl border border-[var(--border)] bg-white p-5 backdrop-blur-md shadow-card-hover space-y-3.5"

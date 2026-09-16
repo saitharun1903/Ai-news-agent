@@ -364,10 +364,10 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
 
                   {/* Right Actions */}
                   <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-[var(--surface-soft)]">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/reader/${paper.id}`}
-                        className="px-3 py-1.5 rounded-xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                        className="px-3.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-xs font-semibold flex items-center gap-1.5 transition-transform active:scale-95 touch-target shadow-xs"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>Read</span>
@@ -378,7 +378,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
                           href={paper.pdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1 transition-colors bg-white shadow-xs"
+                          className="px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-mono flex items-center gap-1 transition-all active:scale-95 touch-target bg-white shadow-xs"
                         >
                           <FileText className="h-3.5 w-3.5 text-rose-500" />
                           <span>PDF</span>
@@ -387,7 +387,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
 
                       <button
                         onClick={() => handleToggleFavorite(paper)}
-                        className={`p-1.5 rounded-xl border transition-colors shadow-xs ${
+                        className={`p-2 rounded-xl border transition-all active:scale-95 touch-target shadow-xs ${
                           isFav
                             ? "border-rose-200 bg-rose-50 text-rose-600"
                             : "border-[var(--border)] text-slate-400 hover:text-rose-600 hover:bg-rose-50/50 bg-white"
@@ -404,7 +404,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
                           href={paper.githubUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors bg-white shadow-xs"
+                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all active:scale-95 touch-target bg-white shadow-xs"
                           title="Verified GitHub Repository"
                         >
                           <GitBranch className="h-3.5 w-3.5 text-indigo-600" />
@@ -415,7 +415,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
                           href={paper.projectUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors bg-white shadow-xs"
+                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all active:scale-95 touch-target bg-white shadow-xs"
                           title="Verified Project Page"
                         >
                           <Globe className="h-3.5 w-3.5 text-[var(--accent)]" />
@@ -426,7 +426,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
                           href={paper.datasetUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors bg-white shadow-xs"
+                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all active:scale-95 touch-target bg-white shadow-xs"
                           title="Verified Dataset"
                         >
                           <Database className="h-3.5 w-3.5 text-amber-600" />
@@ -437,7 +437,7 @@ export function ResearchDiscoveryEngine({ initialPapers, initialTab = "trending"
                           href={paper.doiUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors bg-white shadow-xs"
+                          className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all active:scale-95 touch-target bg-white shadow-xs"
                           title="Official DOI Link"
                         >
                           <Link2 className="h-3.5 w-3.5 text-emerald-600" />

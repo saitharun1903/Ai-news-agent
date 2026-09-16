@@ -5,6 +5,14 @@ import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover" as const,
+  themeColor: "#fafafa",
+};
+
 export const metadata: Metadata = {
   title: {
     default: `${siteConfig.name} — ${siteConfig.tagline}`,

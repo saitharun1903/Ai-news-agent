@@ -166,11 +166,11 @@ export function TodayBriefingView({
                             story.summary
                           )
                         }
-                        className="p-1 rounded-md text-[var(--text-muted)] hover:text-red-500 transition-colors"
+                        className="p-2 rounded-xl text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50/50 transition-colors touch-target active:scale-90"
                         title={isFav ? "Saved" : "Save"}
                         aria-label="Save story"
                       >
-                        <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+                        <Heart className={`h-4 w-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
                       </button>
                     </div>
 
@@ -198,7 +198,7 @@ export function TodayBriefingView({
                         href={primarySource.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[var(--text-muted)] hover:text-[var(--accent)] inline-flex items-center gap-1 font-medium transition-colors"
+                        className="text-[var(--text-muted)] hover:text-[var(--accent)] inline-flex items-center gap-1 font-medium transition-colors py-1.5"
                       >
                         <span>Source</span>
                         <ExternalLink className="h-3 w-3" />
@@ -206,9 +206,10 @@ export function TodayBriefingView({
                     )}
                     <Link
                       href={`/news/${story.id}`}
-                      className="text-[var(--accent)] hover:underline font-medium ml-auto"
+                      className="text-[var(--accent)] hover:underline font-medium ml-auto py-1.5 inline-flex items-center gap-1 active:scale-95"
                     >
-                      Read story →
+                      <span>Read story</span>
+                      <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </article>
@@ -232,7 +233,7 @@ export function TodayBriefingView({
             </div>
             <Link
               href="/research"
-              className="text-xs text-[var(--accent)] hover:underline font-medium inline-flex items-center gap-1"
+              className="text-xs text-[var(--accent)] hover:underline font-medium inline-flex items-center gap-1 py-1"
             >
               <span>Explore all papers</span>
               <ChevronRight className="h-3 w-3" />
@@ -250,7 +251,7 @@ export function TodayBriefingView({
               return (
                 <article
                   key={paper.id}
-                  className="rounded-2xl border border-[var(--border)] bg-white p-5 shadow-2xs hover:shadow-card hover:border-[var(--accent)]/40 transition-all flex flex-col justify-between group space-y-4"
+                  className="rounded-2xl border border-[var(--border)] bg-white p-4 sm:p-5 shadow-2xs hover:shadow-card hover:border-[var(--accent)]/40 transition-all flex flex-col justify-between group space-y-4"
                 >
                   <div className="space-y-3">
                     {/* Header Tags */}
@@ -277,11 +278,11 @@ export function TodayBriefingView({
                             paper.abstract
                           )
                         }
-                        className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-200 transition-colors"
+                        className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-200 transition-colors touch-target active:scale-90"
                         title={isFav ? "Saved to Favorites" : "Save Paper"}
                         aria-label="Save paper"
                       >
-                        <Heart className={`h-3.5 w-3.5 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
+                        <Heart className={`h-4 w-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
                       </button>
                     </div>
 
@@ -312,9 +313,9 @@ export function TodayBriefingView({
                           href={paper.pdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 rounded-lg bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] font-medium transition-all inline-flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] font-medium transition-all inline-flex items-center gap-1.5 active:scale-95"
                         >
-                          <FileText className="h-3 w-3" />
+                          <FileText className="h-3.5 w-3.5" />
                           <span>PDF</span>
                         </a>
                       )}
@@ -323,9 +324,9 @@ export function TodayBriefingView({
                           href={paper.githubUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 rounded-lg bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] font-medium transition-all inline-flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] font-medium transition-all inline-flex items-center gap-1.5 active:scale-95"
                         >
-                          <Github className="h-3 w-3" />
+                          <Github className="h-3.5 w-3.5" />
                           <span>Code</span>
                         </a>
                       )}
@@ -333,7 +334,7 @@ export function TodayBriefingView({
 
                     <Link
                       href={`/research/${paper.id}`}
-                      className="text-xs font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                      className="text-xs font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 py-1.5 active:scale-95"
                     >
                       <span>Read paper</span>
                       <ArrowRight className="h-3 w-3" />

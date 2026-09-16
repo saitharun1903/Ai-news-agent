@@ -158,7 +158,7 @@ export function ZeroClickStoryCard({
             href={sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-[var(--text-primary)] hover:text-[var(--accent)] hover:bg-[var(--surface-soft)] transition-colors active:scale-95 touch-target"
           >
             <span>Open original</span>
             <ExternalLink className="h-3 w-3" />
@@ -167,28 +167,28 @@ export function ZeroClickStoryCard({
           {/* Reading list bookmark */}
           <button
             onClick={handleBookmark}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 touch-target ${
               bookmarked
                 ? "bg-[var(--text-primary)] text-white"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
             }`}
             title={bookmarked ? "Queued in Reading List" : "Add to Reading List"}
           >
-            <Bookmark className={`h-3 w-3 ${bookmarked ? "fill-current" : ""}`} />
+            <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? "fill-current" : ""}`} />
             <span>{bookmarked ? "Queued" : "Queue"}</span>
           </button>
 
           {/* Permanent Favorite heart */}
           <button
             onClick={handleFavorite}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 touch-target ${
               favorited
                 ? "bg-rose-50 text-rose-600 border border-rose-200"
                 : "text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50/50"
             }`}
             title={favorited ? "Saved in Permanent Favorites" : "Save to Permanent Favorites"}
           >
-            <Heart className={`h-3 w-3 ${favorited ? "fill-rose-500 text-rose-500" : ""}`} />
+            <Heart className={`h-3.5 w-3.5 ${favorited ? "fill-rose-500 text-rose-500" : ""}`} />
             <span>{favorited ? "Favorited" : "Favorite"}</span>
           </button>
         </div>
@@ -197,11 +197,11 @@ export function ZeroClickStoryCard({
         {relatedPapers.length > 0 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="inline-flex items-center gap-1 text-xs font-mono text-[var(--accent)] hover:underline font-medium"
+            className="inline-flex items-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-mono text-[var(--accent)] hover:underline font-medium active:scale-95 touch-target"
           >
-            <BookOpen className="h-3 w-3" />
+            <BookOpen className="h-3.5 w-3.5" />
             <span>{relatedPapers.length} related preprints</span>
-            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         )}
       </div>
@@ -224,22 +224,22 @@ export function ZeroClickStoryCard({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   {paper.pdfUrl && (
                     <a
                       href={paper.pdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2 py-1 rounded-lg border border-[var(--border)] text-[11px] font-mono text-[var(--text-primary)] hover:border-[var(--accent)] flex items-center gap-1 bg-white"
+                      className="px-2.5 py-1.5 rounded-xl border border-[var(--border)] text-xs font-mono text-[var(--text-primary)] hover:border-[var(--accent)] flex items-center gap-1 bg-white active:scale-95 touch-target shadow-xs"
                       title="Direct arXiv PDF"
                     >
-                      <FileText className="h-3 w-3 text-rose-500" />
+                      <FileText className="h-3.5 w-3.5 text-rose-500" />
                       <span>PDF</span>
                     </a>
                   )}
                   <Link
                     href={`/reader/${paper.id}`}
-                    className="px-3 py-1 rounded-lg bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-[11px] font-medium transition-colors"
+                    className="px-3.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-white hover:bg-[var(--accent-hover)] text-xs font-medium transition-transform active:scale-95 touch-target shadow-xs"
                   >
                     Read
                   </Link>

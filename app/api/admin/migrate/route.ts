@@ -50,12 +50,15 @@ async function handleMigration(req: NextRequest) {
     process.env.POSTGRES_PRISMA_URL;
 
   if (sql && postgresUrl && !postgresUrl.includes("[SENSITIVE]")) {
-    const client = new Client({
-      connectionString: postgresUrl,
-      ssl: { rejectUnauthorized: false },
-    });
-
+    const prevTls = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
     try {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      const cleanUrl = postgresUrl.replace(/[?&]sslmode=[^&]+/gi, "").replace(/\?$/, "");
+      const client = new Client({
+        connectionString: cleanUrl,
+        ssl: { rejectUnauthorized: false },
+      });
+
       await client.connect();
       await client.query(sql);
       results.postgresMigration = "Executed schema.sql successfully via direct PostgreSQL connection";
@@ -63,8 +66,11 @@ async function handleMigration(req: NextRequest) {
     } catch (err: any) {
       console.error("[Migration] PostgreSQL direct query error:", err);
       results.postgresError = err.message;
+    } finally {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = prevTls;
     }
-  } else {
+  }
+ else {
     results.postgresStatus = "POSTGRES_URL was sensitive or not available in this environment";
   }
 

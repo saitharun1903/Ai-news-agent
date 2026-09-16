@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeTechnicalDepth } from "@/lib/db/types";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const preferences = await db.getUserPreferences();
+    const userId = await getEffectiveUserId();
+    const preferences = await db.getUserPreferences(userId);
     return NextResponse.json(preferences);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -91,7 +93,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "soundEnabled must be a boolean" }, { status: 400 });
     }
 
-    const updated = await db.updateUserPreferences("user_primary", body);
+    const userId = await getEffectiveUserId();
+    const updated = await db.updateUserPreferences(userId, body);
     return NextResponse.json(updated);
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Failed to update preferences" }, { status: 500 });

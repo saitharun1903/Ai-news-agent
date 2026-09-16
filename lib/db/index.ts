@@ -25,6 +25,21 @@ import {
 } from "./types";
 import { DEFAULT_SOURCES } from "@/lib/ingestion/sources";
 import { mergePaperPreprints, filterNeverShownAsNew } from "@/lib/ingestion/canonicalizer";
+import {
+  fetchUserProfileFromDb,
+  upsertUserProfileInDb,
+  fetchBookmarksFromDb,
+  saveBookmarkToDb,
+  deleteBookmarkFromDb,
+  fetchFavoritesFromDb,
+  saveFavoriteToDb,
+  deleteFavoriteFromDb,
+  fetchReadingSessionsFromDb,
+  saveReadingSessionToDb,
+  fetchNotesFromDb,
+  saveNoteToDb,
+  deleteNoteFromDb,
+} from "./supabase-adapter";
 
 interface DatabaseData {
   profile: UserProfile;
@@ -713,30 +728,45 @@ class StorageRepository {
   }
 
   // --- User Profile & Habits ---
-  async getUserProfile(): Promise<UserProfile> {
+  async getUserProfile(userId: string = "user_primary"): Promise<UserProfile> {
     const data = this.load();
-    const tz = data.profile.timezone || "Asia/Kolkata";
-    const goal = data.profile.dailyGoalMinutes || 25;
+    const dbProfile = await fetchUserProfileFromDb(userId);
+    const profile = dbProfile || data.profile;
+
+    const tz = profile.timezone || "Asia/Kolkata";
+    const goal = profile.dailyGoalMinutes || 25;
+
+    // Fetch reading sessions from DB or local
+    const dbSessions = await fetchReadingSessionsFromDb(userId);
+    const sessions = dbSessions || data.readingSessions || [];
 
     // Derived strictly from real reading sessions
-    const dailyMap = getDailyActivityMap(data.readingSessions || [], goal, tz);
+    const dailyMap = getDailyActivityMap(sessions, goal, tz);
     const streaks = calculateStreaks(dailyMap, tz, goal);
     const completedPapers = new Set(
-      (data.readingSessions || []).filter((s) => s.completed).map((s) => s.paperId)
+      sessions.filter((s) => s.completed).map((s) => s.paperId)
     ).size;
-    const totalSecs = (data.readingSessions || []).reduce((sum, s) => sum + (s.timeSpentSeconds || 0), 0);
+    const totalSecs = sessions.reduce((sum, s) => sum + (s.timeSpentSeconds || 0), 0);
 
-    data.profile.readingStreak = streaks.currentStreak;
-    data.profile.longestStreak = streaks.longestStreak;
-    data.profile.papersReadCount = completedPapers;
-    data.profile.totalReadingMinutes = Math.round(totalSecs / 60);
-    if (!data.profile.timezone) data.profile.timezone = tz;
-    if (!data.profile.createdAt) data.profile.createdAt = "2026-09-01T00:00:00.000Z";
+    profile.readingStreak = streaks.currentStreak;
+    profile.longestStreak = streaks.longestStreak;
+    profile.papersReadCount = completedPapers;
+    profile.totalReadingMinutes = Math.round(totalSecs / 60);
+    if (!profile.timezone) profile.timezone = tz;
+    if (!profile.createdAt) profile.createdAt = "2026-09-01T00:00:00.000Z";
 
-    return data.profile;
+    // Keep local cache updated
+    data.profile = profile;
+
+    // Persist streak calculations back to DB in background
+    if (dbProfile) {
+      upsertUserProfileInDb(profile).catch(() => {});
+    }
+
+    return profile;
   }
 
-  async updateUserProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
+  async updateUserProfile(updates: Partial<UserProfile>, userId: string = "user_primary"): Promise<UserProfile> {
     const data = this.load();
     data.profile = {
       ...data.profile,
@@ -744,11 +774,15 @@ class StorageRepository {
       updatedAt: new Date().toISOString(),
     };
     this.schedulePersist();
-    return this.getUserProfile();
+
+    // Persist to Supabase
+    await upsertUserProfileInDb({ ...data.profile, id: userId });
+
+    return this.getUserProfile(userId);
   }
 
-  async getUserPreferences(userId?: string): Promise<UserPreferences> {
-    const profile = await this.getUserProfile();
+  async getUserPreferences(userId: string = "user_primary"): Promise<UserPreferences> {
+    const profile = await this.getUserProfile(userId);
     const depth = normalizeTechnicalDepth(profile.difficultyPreference);
     return {
       userId: profile.id,
@@ -764,7 +798,7 @@ class StorageRepository {
     };
   }
 
-  async updateUserPreferences(userId: string, updates: Partial<UserPreferences>): Promise<UserPreferences> {
+  async updateUserPreferences(userId: string = "user_primary", updates: Partial<UserPreferences>): Promise<UserPreferences> {
     const profileUpdates: Partial<UserProfile> = {};
 
     if (updates.dailyGoalMinutes !== undefined) {
@@ -793,7 +827,7 @@ class StorageRepository {
       profileUpdates.soundEnabled = updates.soundEnabled;
     }
 
-    await this.updateUserProfile(profileUpdates);
+    await this.updateUserProfile(profileUpdates, userId);
     return this.getUserPreferences(userId);
   }
 
@@ -820,6 +854,7 @@ class StorageRepository {
     if (existing) {
       existing.lastUpdatedAt = nowIso;
       this.schedulePersist();
+      saveReadingSessionToDb(existing).catch(() => {});
       return existing;
     }
 
@@ -840,6 +875,7 @@ class StorageRepository {
 
     data.readingSessions.push(newSession);
     this.schedulePersist();
+    saveReadingSessionToDb(newSession).catch(() => {});
     return newSession;
   }
 
@@ -889,6 +925,7 @@ class StorageRepository {
     }
 
     this.schedulePersist();
+    saveReadingSessionToDb(session).catch(() => {});
     return session;
   }
 
@@ -927,6 +964,7 @@ class StorageRepository {
       session.lastUpdatedAt = nowIso;
       session.endedAt = nowIso;
       this.schedulePersist();
+      saveReadingSessionToDb(session).catch(() => {});
       return session;
     }
 
@@ -940,23 +978,23 @@ class StorageRepository {
       session.endedAt = new Date().toISOString();
       session.lastUpdatedAt = new Date().toISOString();
       this.schedulePersist();
+      saveReadingSessionToDb(session).catch(() => {});
     }
   }
-
-  
 
   async recordReadingActivity(
     paperId: string,
     paperTitle: string,
     timeSpentSeconds: number,
     progressPercent: number,
-    completed: boolean = false
+    completed: boolean = false,
+    userId: string = "user_primary"
   ): Promise<ReadingSession> {
     const data = this.load();
     const nowIso = new Date().toISOString();
 
     let session = data.readingSessions.find(
-      (s) => s.paperId === paperId && s.userId === data.profile.id && s.status !== "completed"
+      (s) => s.paperId === paperId && s.userId === userId && s.status !== "completed"
     );
 
     if (session) {
@@ -973,7 +1011,7 @@ class StorageRepository {
     } else {
       session = {
         id: `sess_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        userId: data.profile.id,
+        userId,
         paperId,
         paperTitle,
         timeSpentSeconds,
@@ -990,10 +1028,17 @@ class StorageRepository {
     }
 
     this.schedulePersist();
+    saveReadingSessionToDb(session).catch(() => {});
     return session;
   }
 
-  async getReadingSessions(userId?: string): Promise<ReadingSession[]> {
+  async getReadingSessions(userId: string = "user_primary"): Promise<ReadingSession[]> {
+    const dbSessions = await fetchReadingSessionsFromDb(userId);
+    if (dbSessions) {
+      const data = this.load();
+      data.readingSessions = dbSessions;
+      return dbSessions;
+    }
     const data = this.load();
     if (userId) {
       return data.readingSessions.filter((s) => s.userId === userId);
@@ -1067,7 +1112,13 @@ class StorageRepository {
   }
 
   // --- Bookmarks ---
-  async getBookmarks(): Promise<Bookmark[]> {
+  async getBookmarks(userId: string = "user_primary"): Promise<Bookmark[]> {
+    const dbBookmarks = await fetchBookmarksFromDb(userId);
+    if (dbBookmarks) {
+      const data = this.load();
+      data.bookmarks = dbBookmarks;
+      return dbBookmarks;
+    }
     const data = this.load();
     return data.bookmarks.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -1086,17 +1137,25 @@ class StorageRepository {
     };
     data.bookmarks.unshift(newBookmark);
     this.schedulePersist();
+    saveBookmarkToDb(newBookmark).catch(() => {});
     return newBookmark;
   }
 
-  async removeBookmark(itemId: string): Promise<void> {
+  async removeBookmark(itemId: string, userId: string = "user_primary"): Promise<void> {
     const data = this.load();
     data.bookmarks = data.bookmarks.filter((b) => b.itemId !== itemId);
     this.schedulePersist();
+    deleteBookmarkFromDb(userId, itemId).catch(() => {});
   }
 
   // --- Notes & Highlights ---
-  async getNotes(filter?: { paperId?: string; topic?: string }): Promise<Note[]> {
+  async getNotes(filter?: { paperId?: string; topic?: string }, userId: string = "user_primary"): Promise<Note[]> {
+    const dbNotes = await fetchNotesFromDb(userId, filter);
+    if (dbNotes) {
+      const data = this.load();
+      data.notes = dbNotes;
+      return dbNotes;
+    }
     const data = this.load();
     let res = [...data.notes];
     if (filter?.paperId) {
@@ -1119,13 +1178,15 @@ class StorageRepository {
     };
     data.notes.unshift(newNote);
     this.schedulePersist();
+    saveNoteToDb(newNote).catch(() => {});
     return newNote;
   }
 
-  async deleteNote(id: string): Promise<void> {
+  async deleteNote(id: string, userId: string = "user_primary"): Promise<void> {
     const data = this.load();
     data.notes = data.notes.filter((n) => n.id !== id);
     this.schedulePersist();
+    deleteNoteFromDb(userId, id).catch(() => {});
   }
 
   // --- Ingestion Logs ---
@@ -1204,7 +1265,13 @@ class StorageRepository {
   }
 
   // --- Persistent Favorites (Never Expiring) ---
-  async getFavorites(entityType?: string): Promise<UserFavorite[]> {
+  async getFavorites(entityType?: string, userId: string = "user_primary"): Promise<UserFavorite[]> {
+    const dbFavs = await fetchFavoritesFromDb(userId, entityType);
+    if (dbFavs) {
+      const data = this.load();
+      data.favorites = dbFavs;
+      return dbFavs;
+    }
     const data = this.load();
     let res = [...(data.favorites || [])];
     if (entityType && entityType !== "all") {
@@ -1228,16 +1295,18 @@ class StorageRepository {
     };
     data.favorites.unshift(newFav);
     this.schedulePersist();
+    saveFavoriteToDb(newFav).catch(() => {});
     return newFav;
   }
 
-  async removeFavorite(entityType: string, entityId: string): Promise<boolean> {
+  async removeFavorite(entityType: string, entityId: string, userId: string = "user_primary"): Promise<boolean> {
     const data = this.load();
     data.favorites = data.favorites || [];
     const initialLen = data.favorites.length;
     data.favorites = data.favorites.filter(
       (f) => !(f.entityType === entityType && f.entityId === entityId)
     );
+    deleteFavoriteFromDb(userId, entityType, entityId).catch(() => {});
     if (data.favorites.length !== initialLen) {
       this.schedulePersist();
       return true;
@@ -1245,7 +1314,7 @@ class StorageRepository {
     return false;
   }
 
-  async isFavorite(entityType: string, entityId: string): Promise<boolean> {
+  async isFavorite(entityType: string, entityId: string, userId: string = "user_primary"): Promise<boolean> {
     const data = this.load();
     return (data.favorites || []).some((f) => f.entityType === entityType && f.entityId === entityId);
   }

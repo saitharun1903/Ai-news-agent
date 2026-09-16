@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { siteConfig } from "@/config/site";
+import { checkRateLimit } from "@/lib/redis/ratelimit";
+import { cacheGet, cacheSet, CacheKeys } from "@/lib/redis";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 const INTENT_MAPPINGS: Record<string, string[]> = {
   inference: ["quantization", "speculative", "kv cache", "vllm", "throughput", "pruning", "distillation"],
@@ -14,18 +17,56 @@ const INTENT_MAPPINGS: Record<string, string[]> = {
 };
 
 export async function GET(req: NextRequest) {
+  const userId = await getEffectiveUserId();
+  const forwarded = req.headers.get("x-forwarded-for");
+  const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") || "127.0.0.1";
+  const identifier = userId !== "user_primary" ? userId : ip;
+
+  // Rate limit: 60 req/min
+  const rl = await checkRateLimit(identifier, "search");
+  if (!rl.success) {
+    const limitedRes = NextResponse.json(
+      {
+        error: "Search rate limit reached. Please wait a moment.",
+        retryAfterSeconds: rl.reset,
+      },
+      { status: 429 }
+    );
+    limitedRes.headers.set("X-RateLimit-Limit", String(rl.limit));
+    limitedRes.headers.set("X-RateLimit-Remaining", "0");
+    limitedRes.headers.set("X-RateLimit-Reset", String(rl.reset));
+    limitedRes.headers.set("Retry-After", String(rl.reset));
+    return limitedRes;
+  }
+
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() || "";
   const type = searchParams.get("type") || "all";
 
   if (!q) {
-    return NextResponse.json({
+    const emptyRes = NextResponse.json({
       papers: [],
       articleGroups: [],
       projects: [],
       topics: [],
       authors: [],
     });
+    emptyRes.headers.set("X-RateLimit-Limit", String(rl.limit));
+    emptyRes.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+    emptyRes.headers.set("X-RateLimit-Reset", String(rl.reset));
+    return emptyRes;
+  }
+
+  // Check Upstash Redis cache (10 min TTL)
+  const cacheKey = CacheKeys.search(`${q}_${type}`);
+  const cachedData = await cacheGet<any>(cacheKey);
+  if (cachedData) {
+    const cachedRes = NextResponse.json(cachedData);
+    cachedRes.headers.set("X-Cache", "HIT");
+    cachedRes.headers.set("X-RateLimit-Limit", String(rl.limit));
+    cachedRes.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+    cachedRes.headers.set("X-RateLimit-Reset", String(rl.reset));
+    return cachedRes;
   }
 
   const queryLower = q.toLowerCase();
@@ -125,7 +166,7 @@ export async function GET(req: NextRequest) {
   }
   const authors = Array.from(authorMap.values()).slice(0, 6);
 
-  return NextResponse.json({
+  const payload = {
     query: q,
     expandedTerms: termList,
     papers,
@@ -133,5 +174,15 @@ export async function GET(req: NextRequest) {
     projects,
     topics,
     authors,
-  });
+  };
+
+  // Cache in Upstash Redis (10 minutes)
+  await cacheSet(cacheKey, payload, 600);
+
+  const response = NextResponse.json(payload);
+  response.headers.set("X-Cache", "MISS");
+  response.headers.set("X-RateLimit-Limit", String(rl.limit));
+  response.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+  response.headers.set("X-RateLimit-Reset", String(rl.reset));
+  return response;
 }

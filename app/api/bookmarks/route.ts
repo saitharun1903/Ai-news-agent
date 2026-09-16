@@ -1,16 +1,19 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 export async function GET() {
-  const bookmarks = await db.getBookmarks();
+  const userId = await getEffectiveUserId();
+  const bookmarks = await db.getBookmarks(userId);
   return NextResponse.json(bookmarks);
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getEffectiveUserId();
     const body = await req.json();
     const bookmark = await db.addBookmark({
-      userId: "user_primary",
+      userId,
       itemType: body.itemType || "paper",
       itemId: body.itemId,
       title: body.title,
@@ -25,13 +28,15 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const userId = await getEffectiveUserId();
     const { searchParams } = new URL(req.url);
     const itemId = searchParams.get("itemId");
     if (!itemId) return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
 
-    await db.removeBookmark(itemId);
+    await db.removeBookmark(itemId, userId);
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

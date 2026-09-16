@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = await getEffectiveUserId();
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get("entityType") || undefined;
-    const favorites = await db.getFavorites(entityType);
+    const favorites = await db.getFavorites(entityType, userId);
     return NextResponse.json(favorites);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getEffectiveUserId();
     const body = await request.json();
     if (!body.entityType || !body.entityId || !body.title || !body.url) {
       return NextResponse.json(
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newFavorite = await db.addFavorite({
-      userId: "user_primary",
+      userId,
       entityType: body.entityType,
       entityId: body.entityId,
       title: body.title,
@@ -41,6 +44,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const userId = await getEffectiveUserId();
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get("entityType");
     const entityId = searchParams.get("entityId");
@@ -52,7 +56,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const removed = await db.removeFavorite(entityType, entityId);
+    const removed = await db.removeFavorite(entityType, entityId, userId);
     return NextResponse.json({ success: removed });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

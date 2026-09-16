@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const profile = await db.getUserProfile();
-    const sessions = await db.getReadingSessions(profile.id);
+    const userId = await getEffectiveUserId();
+    const sessions = await db.getReadingSessions(userId);
     return NextResponse.json(sessions);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -14,12 +15,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const profile = await db.getUserProfile();
+    const userId = await getEffectiveUserId();
     const { action, sessionId, paperId, paperTitle, deltaSeconds, progressPercent, completed } = body;
 
     if (action === "start") {
       const session = await db.startReadingSession(
-        profile.id,
+        userId,
         paperId,
         paperTitle || "Technical Preprint",
         sessionId
@@ -53,7 +54,8 @@ export async function POST(req: NextRequest) {
       paperTitle || "Preprint",
       deltaSeconds || 60,
       progressPercent || 10,
-      completed || false
+      completed || false,
+      userId
     );
     return NextResponse.json(legacy);
   } catch (err: any) {

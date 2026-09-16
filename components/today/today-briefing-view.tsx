@@ -8,6 +8,7 @@ import {
   Sparkles,
   ExternalLink,
   BookOpen,
+  Flame,
   FileText,
   Github,
   Heart,
@@ -31,6 +32,10 @@ interface TodayBriefingViewProps {
   quickTopics: QuickTopicItem[];
   lastUpdatedText: string;
   dateFormatted: string;
+  streak?: number;
+  dailyGoalMinutes?: number;
+  todayMinutes?: number;
+  todayQualified?: boolean;
 }
 
 export function TodayBriefingView({
@@ -40,6 +45,10 @@ export function TodayBriefingView({
   quickTopics,
   lastUpdatedText,
   dateFormatted,
+  streak = 0,
+  dailyGoalMinutes = 25,
+  todayMinutes = 0,
+  todayQualified = false,
 }: TodayBriefingViewProps) {
   const [favoritedMap, setFavoritedMap] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -110,6 +119,54 @@ export function TodayBriefingView({
           Curated daily briefing of high-impact industry developments and essential computer science research.
         </p>
       </header>
+
+      {/* Daily Reading Habit Tracker */}
+      <div className="rounded-2xl border border-[var(--border)] bg-white p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center shrink-0">
+            <Flame className={`h-5 w-5 ${streak > 0 ? "text-amber-500 fill-amber-500" : "text-slate-300"}`} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-[var(--text-primary)] font-mono">
+                {streak} {streak === 1 ? "day" : "days"} streak
+              </span>
+              {todayQualified ? (
+                <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Goal Met Today
+                </span>
+              ) : (
+                <span className="text-[10px] text-[var(--text-muted)] font-medium">
+                  {Math.max(0, dailyGoalMinutes - todayMinutes)}m remaining today
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Daily habit goal: {todayMinutes} / {dailyGoalMinutes} min ({Math.min(100, Math.round((todayMinutes / dailyGoalMinutes) * 100))}%)
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 sm:w-64">
+          <div className="flex-1">
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  todayQualified ? "bg-emerald-500" : "bg-[var(--accent)]"
+                }`}
+                style={{ width: `${Math.min(100, Math.round((todayMinutes / dailyGoalMinutes) * 100))}%` }}
+              />
+            </div>
+          </div>
+          <Link
+            href="/insights"
+            className="text-xs font-semibold text-[var(--accent)] hover:underline shrink-0"
+          >
+            Insights &rarr;
+          </Link>
+        </div>
+      </div>
+
 
       {/* 2. FEATURED STORY (1 Story) */}
       <section aria-label="Featured Story">

@@ -99,6 +99,12 @@ export interface AnalyticsSummary {
   totalReadingMinutes: number;
   totalReadingSeconds: number;
   totalReadingFormatted: string;
+  todayMinutes: number;
+  todaySeconds: number;
+  todayQualified: boolean;
+  todayRemainingMinutes: number;
+  todayProgressPct: number;
+  lastCompletedDate: string | null;
   notesCount: number;
   favoritesCount: number;
   queuedPapersCount: number;
@@ -154,14 +160,15 @@ export class AnalyticsService {
       map.set(localDate, existing);
     }
 
+    const qualifyingThresholdSeconds = dailyGoalMinutes * 60;
     for (const [dateStr, item] of map.entries()) {
       const [year, month, day] = dateStr.split("-").map(Number);
       const d = new Date(year, month - 1, day);
       item.dayOfWeek = d.getDay();
       item.day = dayNames[item.dayOfWeek];
       item.minutes = Math.round(item.seconds / 60);
-      item.metGoal = item.minutes >= dailyGoalMinutes;
-      item.qualifiesForStreak = item.seconds >= 60 || item.papersCompleted > 0;
+      item.metGoal = item.seconds >= qualifyingThresholdSeconds;
+      item.qualifiesForStreak = item.seconds >= qualifyingThresholdSeconds;
     }
 
     return map;
@@ -169,20 +176,49 @@ export class AnalyticsService {
 
   static calculateStreaks(
     dailyMap: Map<string, DayReadingSummary>,
-    timezone: string = "Asia/Kolkata"
-  ): { currentStreak: number; longestStreak: number } {
+    timezone: string = "Asia/Kolkata",
+    dailyGoalMinutes: number = 25
+  ): {
+    currentStreak: number;
+    longestStreak: number;
+    todaySeconds: number;
+    todayMinutes: number;
+    todayQualified: boolean;
+    todayRemainingMinutes: number;
+    todayProgressPct: number;
+    lastCompletedDate: string | null;
+  } {
+    const todayStr = getLocalDateString(new Date(), timezone);
+    const todayItem = dailyMap.get(todayStr);
+    const todaySeconds = todayItem?.seconds || 0;
+    const todayMinutes = Math.floor(todaySeconds / 60);
+    const goalSeconds = dailyGoalMinutes * 60;
+    const todayQualified = todaySeconds >= goalSeconds;
+    const todayRemainingMinutes = Math.max(0, Math.ceil((goalSeconds - todaySeconds) / 60));
+    const todayProgressPct = Math.min(100, Math.round((todaySeconds / goalSeconds) * 100));
+
     const qualifyingDates = Array.from(dailyMap.values())
       .filter((d) => d.qualifiesForStreak)
       .map((d) => d.date)
       .sort();
 
     if (qualifyingDates.length === 0) {
-      return { currentStreak: 0, longestStreak: 0 };
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        todaySeconds,
+        todayMinutes,
+        todayQualified,
+        todayRemainingMinutes,
+        todayProgressPct,
+        lastCompletedDate: null,
+      };
     }
 
     const qualifyingSet = new Set(qualifyingDates);
+    const lastCompletedDate = qualifyingDates[qualifyingDates.length - 1];
 
-    // 1. Longest streak
+    // 1. Longest streak across history
     let longest = 0;
     let currentRun = 0;
     let prevDate: Date | null = null;
@@ -209,16 +245,16 @@ export class AnalyticsService {
     }
 
     // 2. Current streak in user timezone
-    const todayStr = getLocalDateString(new Date(), timezone);
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = getLocalDateString(yesterday, timezone);
 
     let currentStreak = 0;
-    let checkDate = new Date();
 
     if (qualifyingSet.has(todayStr)) {
+      // Today qualified! Count today + consecutive days before today
       currentStreak = 1;
+      let checkDate = new Date();
       while (true) {
         checkDate.setDate(checkDate.getDate() - 1);
         const checkStr = getLocalDateString(checkDate, timezone);
@@ -229,8 +265,10 @@ export class AnalyticsService {
         }
       }
     } else if (qualifyingSet.has(yesterdayStr)) {
+      // Yesterday qualified, and today is still in progress (not yet qualified).
+      // The streak from yesterday remains active!
       currentStreak = 1;
-      checkDate = new Date(yesterday);
+      let checkDate = new Date(yesterday);
       while (true) {
         checkDate.setDate(checkDate.getDate() - 1);
         const checkStr = getLocalDateString(checkDate, timezone);
@@ -241,12 +279,19 @@ export class AnalyticsService {
         }
       }
     } else {
+      // Neither today nor yesterday qualified -> streak has broken
       currentStreak = 0;
     }
 
     return {
       currentStreak,
       longestStreak: Math.max(longest, currentStreak),
+      todaySeconds,
+      todayMinutes,
+      todayQualified,
+      todayRemainingMinutes,
+      todayProgressPct,
+      lastCompletedDate,
     };
   }
 
@@ -397,7 +442,8 @@ export class AnalyticsService {
     const dailyGoal = profile.dailyGoalMinutes || 25;
 
     const dailyMap = this.getDailyActivityMap(sessions, dailyGoal, tz);
-    const { currentStreak, longestStreak } = this.calculateStreaks(dailyMap, tz);
+    const streaks = this.calculateStreaks(dailyMap, tz, dailyGoal);
+    const { currentStreak, longestStreak, todaySeconds, todayMinutes, todayQualified, todayRemainingMinutes, todayProgressPct, lastCompletedDate } = streaks;
 
     const completedPaperIds = new Set(
       sessions.filter((s) => s.completed).map((s) => s.paperId)
@@ -462,6 +508,12 @@ export class AnalyticsService {
       currentStreak,
       longestStreak,
       papersRead,
+      todayMinutes,
+      todaySeconds,
+      todayQualified,
+      todayRemainingMinutes,
+      todayProgressPct,
+      lastCompletedDate,
       totalReadingMinutes,
       totalReadingSeconds,
       totalReadingFormatted,

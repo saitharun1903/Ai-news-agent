@@ -1,8 +1,8 @@
 {
   "profile": {
     "id": "user_primary",
-    "name": "AI Researcher",
-    "email": "researcher@pulse.internal",
+    "name": "Sai Tharun Reddy",
+    "email": "sai@lunor.co.in",
     "readingStreak": 0,
     "longestStreak": 0,
     "lastActiveDate": "",
@@ -16,11 +16,13 @@
       "rag",
       "ai-infrastructure"
     ],
-    "dailyGoalMinutes": 40,
+    "dailyGoalMinutes": 25,
     "morningBriefingTime": "08:30",
     "desktopNotificationsEnabled": true,
     "weekendNotificationsEnabled": true,
-    "soundEnabled": true
+    "soundEnabled": true,
+    "timezone": "Asia/Kolkata",
+    "createdAt": "2026-09-01T00:00:00.000Z"
   },
   "sources": [
     {

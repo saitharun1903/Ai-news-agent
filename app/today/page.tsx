@@ -1,5 +1,6 @@
 import React from "react";
 import { db } from "@/lib/db";
+import { AnalyticsService } from "@/lib/analytics";
 import { TodayBriefingView, QuickTopicItem } from "@/components/today/today-briefing-view";
 
 export const revalidate = 60; // 1-minute freshness revalidation
@@ -60,6 +61,9 @@ export default async function TodayPage() {
     );
   }
 
+  const profile = await db.getUserProfile();
+  const analytics = await AnalyticsService.getSummary(profile.id);
+
   return (
     <TodayBriefingView
       leadStory={leadStory}
@@ -68,6 +72,10 @@ export default async function TodayPage() {
       quickTopics={quickTopics}
       lastUpdatedText={lastUpdatedText}
       dateFormatted={dateFormatted}
+      streak={analytics.currentStreak}
+      dailyGoalMinutes={profile.dailyGoalMinutes || 25}
+      todayMinutes={analytics.todayMinutes || 0}
+      todayQualified={analytics.todayQualified}
     />
   );
 }

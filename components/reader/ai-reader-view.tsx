@@ -103,6 +103,34 @@ export function AIReaderView({ paper, chunks }: AIReaderViewProps) {
     };
   }, [paper.id, paper.title]);
 
+  // User activity & Idle detection (pause after 60s of inactivity)
+  const [isUserActive, setIsUserActive] = useState(true);
+
+  useEffect(() => {
+    let idleTimeout: NodeJS.Timeout;
+
+    const handleUserActivity = () => {
+      setIsUserActive(true);
+      clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => {
+        setIsUserActive(false);
+      }, 60000); // 60 seconds inactivity threshold
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((evt) => window.addEventListener(evt, handleUserActivity, { passive: true }));
+    
+    // Initial arm
+    idleTimeout = setTimeout(() => {
+      setIsUserActive(false);
+    }, 60000);
+
+    return () => {
+      clearTimeout(idleTimeout);
+      events.forEach((evt) => window.removeEventListener(evt, handleUserActivity));
+    };
+  }, []);
+
   // Tab visibility listener: pause reading timer when user leaves tab
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -112,14 +140,14 @@ export function AIReaderView({ paper, chunks }: AIReaderViewProps) {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  // Timer: log reading time only when tab is active and visible
+  // Timer: log reading time only when tab is active, visible, and user is actively reading
   useEffect(() => {
-    if (!isTabActive) return;
+    if (!isTabActive || !isUserActive) return;
     const timer = setInterval(() => {
       setSecondsRead((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [isTabActive]);
+  }, [isTabActive, isUserActive]);
 
   // 15-second heartbeat to /api/reading-sessions
   useEffect(() => {

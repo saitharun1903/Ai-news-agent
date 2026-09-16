@@ -1,3 +1,4 @@
+import { getDailyActivityMap, calculateStreaks, getLocalDateString } from "@/lib/analytics/streak";
 import fs from "fs";
 import path from "path";
 import {
@@ -64,8 +65,10 @@ function getDbPath(): string {
 
 const DEFAULT_PROFILE: UserProfile = {
   id: "user_primary",
-  name: "AI Researcher",
-  email: "researcher@lunor.internal",
+  name: "Sai Tharun Reddy",
+  email: "sai@lunor.co.in",
+  timezone: "Asia/Kolkata",
+  createdAt: "2026-09-01T00:00:00.000Z",
   readingStreak: 0,
   longestStreak: 0,
   lastActiveDate: "",
@@ -641,14 +644,36 @@ class StorageRepository {
   // --- User Profile & Habits ---
   async getUserProfile(): Promise<UserProfile> {
     const data = this.load();
+    const tz = data.profile.timezone || "Asia/Kolkata";
+    const goal = data.profile.dailyGoalMinutes || 25;
+
+    // Derived strictly from real reading sessions
+    const dailyMap = getDailyActivityMap(data.readingSessions || [], goal, tz);
+    const streaks = calculateStreaks(dailyMap, tz, goal);
+    const completedPapers = new Set(
+      (data.readingSessions || []).filter((s) => s.completed).map((s) => s.paperId)
+    ).size;
+    const totalSecs = (data.readingSessions || []).reduce((sum, s) => sum + (s.timeSpentSeconds || 0), 0);
+
+    data.profile.readingStreak = streaks.currentStreak;
+    data.profile.longestStreak = streaks.longestStreak;
+    data.profile.papersReadCount = completedPapers;
+    data.profile.totalReadingMinutes = Math.round(totalSecs / 60);
+    if (!data.profile.timezone) data.profile.timezone = tz;
+    if (!data.profile.createdAt) data.profile.createdAt = "2026-09-01T00:00:00.000Z";
+
     return data.profile;
   }
 
   async updateUserProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
     const data = this.load();
-    data.profile = { ...data.profile, ...updates };
+    data.profile = {
+      ...data.profile,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
     this.schedulePersist();
-    return data.profile;
+    return this.getUserProfile();
   }
 
   // --- Reading Sessions & Event Tracking ---
@@ -857,27 +882,35 @@ class StorageRepository {
 
   async getTodayReadingMinutes(): Promise<number> {
     const data = this.load();
-    const todayStr = new Date().toISOString().split("T")[0];
-    const todaySessions = data.readingSessions.filter((s) => s.startedAt.startsWith(todayStr));
-    const totalSecs = todaySessions.reduce((sum, s) => sum + s.timeSpentSeconds, 0);
+    const tz = data.profile.timezone || "Asia/Kolkata";
+    const todayStr = getLocalDateString(new Date(), tz);
+    const todaySessions = (data.readingSessions || []).filter((s) =>
+      getLocalDateString(s.startedAt || s.lastUpdatedAt, tz) === todayStr
+    );
+    const totalSecs = todaySessions.reduce((sum, s) => sum + (s.timeSpentSeconds || 0), 0);
     return Math.round(totalSecs / 60);
   }
 
   async getWeeklyReadingActivity(): Promise<{ day: string; date: string; minutes: number }[]> {
     const data = this.load();
-    const result: { day: string; date: string; minutes: number }[] = [];
+    const tz = data.profile.timezone || "Asia/Kolkata";
+    const goal = data.profile.dailyGoalMinutes || 25;
+    const dailyMap = getDailyActivityMap(data.readingSessions || [], goal, tz);
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const result: { day: string; date: string; minutes: number }[] = [];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const dayName = dayNames[d.getDay()];
-
-      const daySessions = data.readingSessions.filter((s) => s.startedAt.startsWith(dateStr));
-      const mins = Math.round(daySessions.reduce((sum, s) => sum + s.timeSpentSeconds, 0) / 60);
-
-      result.push({ day: dayName, date: dateStr, minutes: mins });
+      const dateStr = getLocalDateString(d, tz);
+      const [year, month, day] = dateStr.split("-").map(Number);
+      const dayOfWeek = new Date(year, month - 1, day).getDay();
+      const existing = dailyMap.get(dateStr);
+      result.push({
+        day: dayNames[dayOfWeek],
+        date: dateStr,
+        minutes: existing ? existing.minutes : 0,
+      });
     }
 
     return result;

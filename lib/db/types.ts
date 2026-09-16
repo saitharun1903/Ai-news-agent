@@ -175,7 +175,11 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string;
+  bio?: string;
   timezone?: string;
+  createdAt?: string;
+  updatedAt?: string;
   readingStreak: number;
   longestStreak: number;
   lastActiveDate: string;

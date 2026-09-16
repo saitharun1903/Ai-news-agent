@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { dropdownVariants } from "@/lib/motion";
 import { LunorLogo } from "@/components/brand/lunor-logo";
+import { useNetworkAwarePrefetch } from "@/lib/network";
 import {
   Search,
   Bookmark,
@@ -25,6 +26,7 @@ interface AppNavbarProps {
 
 export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
   const pathname = usePathname();
+  const shouldPrefetch = useNetworkAwarePrefetch();
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                prefetch={true}
+                prefetch={shouldPrefetch}
                 className={`relative px-3 lg:px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   isActive
                     ? "text-[var(--text-primary)] font-semibold"
@@ -213,7 +215,7 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        prefetch={true}
+                        prefetch={shouldPrefetch}
                         role="menuitem"
                         onClick={() => setIsMoreOpen(false)}
                         className={`flex items-start gap-3 px-2.5 py-2 rounded-lg text-xs transition-colors ${

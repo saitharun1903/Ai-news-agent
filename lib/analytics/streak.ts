@@ -1,4 +1,4 @@
-import { ReadingSession } from "@/lib/db/types";
+import type { ReadingSession } from "../db/types.ts";
 
 // Timezone-aware date string YYYY-MM-DD
 export function getLocalDateString(

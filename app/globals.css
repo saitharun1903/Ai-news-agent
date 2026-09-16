@@ -204,6 +204,17 @@ html, body {
   }
 }
 
+@keyframes lunorPageEnterTablet {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes lunorPageEnterDesktop {
   from {
     opacity: 0;
@@ -220,6 +231,11 @@ html, body {
   will-change: opacity, transform;
 }
 
+.page-enter-tablet {
+  animation: lunorPageEnterTablet 190ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  will-change: opacity, transform;
+}
+
 .page-enter-desktop {
   animation: lunorPageEnterDesktop 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   will-change: opacity, transform;
@@ -227,6 +243,7 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter-mobile,
+  .page-enter-tablet,
   .page-enter-desktop {
     animation: none !important;
     opacity: 1 !important;

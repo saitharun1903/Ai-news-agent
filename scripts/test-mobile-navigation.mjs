@@ -60,13 +60,16 @@ runTest("Instant route skeletons exist (loading.tsx)", () => {
   assert.equal(fs.existsSync("app/research/loading.tsx"), true, "Missing app/research/loading.tsx");
   assert.equal(fs.existsSync("app/today/loading.tsx"), true, "Missing app/today/loading.tsx");
   assert.equal(fs.existsSync("app/news/loading.tsx"), true, "Missing app/news/loading.tsx");
+  assert.equal(fs.existsSync("app/topics/loading.tsx"), true, "Missing app/topics/loading.tsx");
+  assert.equal(fs.existsSync("app/favorites/loading.tsx"), true, "Missing app/favorites/loading.tsx");
+  assert.equal(fs.existsSync("app/profile/loading.tsx"), true, "Missing app/profile/loading.tsx");
 });
 
-// Test 6: Mobile nav provides instant feedback state and prefetch
-runTest("Mobile bottom nav has prefetch and instant pendingPath feedback", () => {
+// Test 6: Mobile nav provides instant feedback state and network-aware prefetch
+runTest("Mobile bottom nav has network-aware prefetch and instant pendingPath feedback", () => {
   const mobileNav = fs.readFileSync("components/layout/mobile-nav.tsx", "utf8");
   assert.equal(mobileNav.includes("pendingPath"), true, "Missing optimistic pendingPath");
-  assert.equal(mobileNav.includes("prefetch={true}"), true, "Missing prefetch on mobile nav");
+  assert.equal(mobileNav.includes("shouldPrefetch"), true, "Missing network-aware prefetch on mobile nav");
 });
 
 // Test 7: 3D tilt disabled on mobile screens (<768px)
@@ -79,6 +82,31 @@ runTest("MotionCard3D strictly disabled on mobile screens (<768px)", () => {
 runTest("SharedSurfaceTransition bypasses layoutId animation on mobile", () => {
   const shared = fs.readFileSync("components/motion/shared-surface-transition.tsx", "utf8");
   assert.equal(shared.includes("window.innerWidth < 768"), true);
+});
+
+// Test 9: Responsive motion profiles for Desktop, Tablet, and Mobile
+runTest("Responsive motion profiles for Mobile, Tablet, and Desktop in PageTransition", () => {
+  const pt = fs.readFileSync("components/motion/page-transition.tsx", "utf8");
+  assert.equal(pt.includes("page-enter-mobile"), true);
+  assert.equal(pt.includes("page-enter-tablet"), true);
+  assert.equal(pt.includes("page-enter-desktop"), true);
+});
+
+// Test 10: Image optimization configured for AVIF and WebP
+runTest("Image optimization configured with AVIF and WebP", () => {
+  const config = fs.readFileSync("next.config.ts", "utf8");
+  assert.equal(config.includes('"image/avif"'), true);
+  assert.equal(config.includes('"image/webp"'), true);
+});
+
+// Test 11: Data fetching parallelized with Promise.all across routes
+runTest("Server-side data fetching parallelized with Promise.all", () => {
+  const todayPage = fs.readFileSync("app/today/page.tsx", "utf8");
+  const newsPage = fs.readFileSync("app/news/page.tsx", "utf8");
+  const researchPage = fs.readFileSync("app/research/page.tsx", "utf8");
+  assert.equal(todayPage.includes("Promise.all"), true);
+  assert.equal(newsPage.includes("Promise.all"), true);
+  assert.equal(researchPage.includes("Promise.all"), true);
 });
 
 console.log("\n=================================================");

@@ -22,9 +22,11 @@ import {
 } from "lucide-react";
 import { bottomSheetVariants, backdropVariants } from "@/lib/motion";
 import { LunorLogo } from "@/components/brand/lunor-logo";
+import { useNetworkAwarePrefetch } from "@/lib/network";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const shouldPrefetch = useNetworkAwarePrefetch();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
 
@@ -117,7 +119,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                prefetch={true}
+                prefetch={shouldPrefetch}
                 onClick={() => setPendingPath(item.href)}
                 className={`w-full min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium transition-transform active:scale-95 ${
                   active
@@ -246,7 +248,7 @@ export function MobileNav() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      prefetch={true}
+                      prefetch={shouldPrefetch}
                       onClick={() => setIsMoreOpen(false)}
                       className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all active:scale-[0.98] ${
                         isActive

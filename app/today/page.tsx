@@ -6,11 +6,13 @@ import { TodayBriefingView, QuickTopicItem } from "@/components/today/today-brie
 export const revalidate = 60; // 1-minute freshness revalidation
 
 export default async function TodayPage() {
-  // 1. Fetch concise daily records (strictly limited for briefing)
-  const articleGroups = await db.getArticleGroups({ limit: 6 });
-  const allPapers = await db.getPapers({ limit: 8 });
-  const paperOfDay = await db.getPaperOfDay();
-  const ingestionLogs = await db.getIngestionLogs();
+  // 1. Fetch concise daily records concurrently with Promise.all
+  const [articleGroups, allPapers, paperOfDay, ingestionLogs] = await Promise.all([
+    db.getArticleGroups({ limit: 6 }),
+    db.getPapers({ limit: 8 }),
+    db.getPaperOfDay(),
+    db.getIngestionLogs(),
+  ]);
 
   // 2. Compute dynamic recency text
   const lastLog = ingestionLogs[0];

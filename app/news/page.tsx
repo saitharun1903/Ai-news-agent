@@ -35,8 +35,10 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     "DEVELOPER TOOLS",
   ];
 
-  const allGroups = await db.getArticleGroups({ limit: 40 });
-  const allPapers = await db.getPapers({ limit: 60 });
+  const [allGroups, allPapers] = await Promise.all([
+    db.getArticleGroups({ limit: 40 }),
+    db.getPapers({ limit: 60 }),
+  ]);
 
   // Extract verified open source projects from research papers
   const githubProjects: GithubProjectItem[] = allPapers

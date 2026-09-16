@@ -18,9 +18,11 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
   const params = await searchParams;
   const currentTab = params.tab || "trending";
 
-  // Fetch all papers from database
-  const papers = await db.getPapers({ limit: 100 });
-  const profile = await db.getUserProfile();
+  // Fetch papers and user profile concurrently
+  const [papers, profile] = await Promise.all([
+    db.getPapers({ limit: 100 }),
+    db.getUserProfile(),
+  ]);
 
   return (
     <div className="space-y-6 font-sans">

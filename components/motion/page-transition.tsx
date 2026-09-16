@@ -18,7 +18,14 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const updateClass = () => {
-        setAnimClass(window.innerWidth < 768 ? "page-enter-mobile" : "page-enter-desktop");
+        const width = window.innerWidth;
+        if (width < 768) {
+          setAnimClass("page-enter-mobile");
+        } else if (width < 1024) {
+          setAnimClass("page-enter-tablet");
+        } else {
+          setAnimClass("page-enter-desktop");
+        }
       };
       updateClass();
       window.addEventListener("resize", updateClass, { passive: true });

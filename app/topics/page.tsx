@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 export const revalidate = 60;
 
 export default async function TopicsIndexPage() {
-  const papers = await db.getPapers();
-  const groups = await db.getArticleGroups();
+  const [papers, groups] = await Promise.all([
+    db.getPapers(),
+    db.getArticleGroups(),
+  ]);
 
   return (
     <div className="space-y-6 font-sans">

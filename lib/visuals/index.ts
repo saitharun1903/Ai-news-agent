@@ -13,7 +13,7 @@ function hashString(str: string): string {
 }
 
 /**
- * Generate technical editorial SVG illustration matching ResearchPulse visual language
+ * Generate technical editorial SVG illustration matching Lunor visual language
  */
 export function generateTechnicalIllustrationSvg(
   topicId: string,
@@ -207,7 +207,7 @@ export class VisualEngine {
       altText: "Technical illustration representing " + group.title,
       width: 800,
       height: 450,
-      visualStyle: "ResearchPulse Light Technical Editorial",
+      visualStyle: "Lunor Light Technical Editorial",
       contentHash: hashString(group.title + group.summary),
       status: "ready",
       generatedAt: new Date().toISOString(),
@@ -250,7 +250,7 @@ export class VisualEngine {
       altText: "Technical illustration representing " + article.title,
       width: 800,
       height: 450,
-      visualStyle: "ResearchPulse Light Technical Editorial",
+      visualStyle: "Lunor Light Technical Editorial",
       contentHash: hashString(article.title + article.summary),
       status: "ready",
       generatedAt: new Date().toISOString(),
@@ -300,7 +300,7 @@ export class VisualEngine {
       altText: "Conceptual architecture illustration for research paper: " + paper.title,
       width: 640,
       height: 480,
-      visualStyle: "ResearchPulse Light Technical Editorial",
+      visualStyle: "Lunor Light Technical Editorial",
       contentHash: hashString(paper.title + (paper.abstract || "")),
       status: "ready",
       generatedAt: new Date().toISOString(),

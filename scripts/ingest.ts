@@ -1,7 +1,7 @@
-﻿import { runIngestionPipeline } from "../lib/ingestion/pipeline";
+import { runIngestionPipeline } from "../lib/ingestion/pipeline";
 
 async function main() {
-  console.log("=== Starting ResearchPulse Live Ingestion ===");
+  console.log("=== Starting Lunor Live Ingestion ===");
   try {
     const res = await runIngestionPipeline();
     console.log("\nIngestion completed successfully!");

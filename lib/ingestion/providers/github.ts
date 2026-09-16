@@ -9,7 +9,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: "application/vnd.github.v3+json",
-      "User-Agent": "ResearchPulse/1.0",
+      "User-Agent": "Lunor/1.0 (+https://lunor.co.in)",
     };
     const token = process.env.GITHUB_TOKEN?.trim();
     if (token) {

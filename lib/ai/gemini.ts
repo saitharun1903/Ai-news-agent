@@ -1,4 +1,4 @@
-﻿import { AIProvider, ConceptExplanation } from "./types";
+import { AIProvider, ConceptExplanation } from "./types";
 import { ArticleGroup, Paper, PaperChunk } from "@/lib/db/types";
 import { HeuristicLocalProvider } from "./local-heuristic";
 
@@ -69,7 +69,7 @@ export class GeminiProvider implements AIProvider {
       .map((c) => `[${c.sectionTitle}]: ${c.content}`)
       .join("\n\n");
 
-    const prompt = `You are ResearchPulse AI Assistant. Answer this question about the research paper "${paper.title}" (${paper.authors.slice(0, 3).join(", ")}) grounded strictly in the provided paper context.\n\nPaper Abstract: ${paper.abstract}\n\nContext Chunks:\n${context}\n\nUser Question: ${question}\n\nProvide an accurate, technical yet accessible answer. Quote key findings or math when relevant.`;
+    const prompt = `You are Lunor AI Assistant. Answer this question about the research paper "${paper.title}" (${paper.authors.slice(0, 3).join(", ")}) grounded strictly in the provided paper context.\n\nPaper Abstract: ${paper.abstract}\n\nContext Chunks:\n${context}\n\nUser Question: ${question}\n\nProvide an accurate, technical yet accessible answer. Quote key findings or math when relevant.`;
     const res = await this.callGemini(prompt);
     return res || this.fallback.answerPaperQuestion(paper, question, chunks);
   }

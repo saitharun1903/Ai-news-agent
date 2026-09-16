@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, ArrowRight, BookOpen, Layers } from "lucide-react";
 import { MotionCard3D } from "@/components/motion/motion-card-3d";
 import { spring } from "@/lib/motion";
+import { LunorLogo } from "@/components/brand/lunor-logo";
 
 interface DesktopBriefingPopupProps {
   onOpenFullBriefing?: () => void;
@@ -99,9 +100,9 @@ export function DesktopBriefingPopup({ onOpenFullBriefing }: DesktopBriefingPopu
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-pulse-subtle" />
+                  <LunorLogo size={20} />
                   <span className="text-xs font-semibold tracking-wider uppercase text-[var(--accent)]">
-                    RESEARCHPULSE
+                    LUNOR
                   </span>
                 </div>
                 <button

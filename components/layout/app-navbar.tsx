@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { dropdownVariants } from "@/lib/motion";
+import { LunorLogo } from "@/components/brand/lunor-logo";
 import {
   Search,
   Bookmark,
@@ -107,17 +108,13 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
         <div className="flex items-center gap-4 sm:gap-6">
           <Link
             href="/"
-            className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg py-1 touch-target"
-            aria-label="ResearchPulse Home"
+            className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-xl py-1 touch-target"
+            aria-label="Lunor Home"
           >
-            <div className="h-8 w-8 rounded-lg bg-[var(--text-primary)] text-white flex items-center justify-center font-bold text-xs tracking-tight shadow-xs group-hover:bg-[var(--accent)] transition-colors shrink-0">
-              RP
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm sm:text-[15px] tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
-                ResearchPulse
-              </span>
-            </div>
+            <LunorLogo size={32} />
+            <span className="font-bold text-base sm:text-lg tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
+              Lunor
+            </span>
           </Link>
         </div>
 

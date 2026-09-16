@@ -19,14 +19,14 @@ export async function fetchCrossrefPapers(
   limit: number = 8
 ): Promise<RawCrossrefPaper[]> {
   try {
-    const mailto = process.env.CROSSREF_MAILTO || "pulse@researchpulse.dev";
+    const mailto = process.env.CROSSREF_MAILTO || "contact@lunor.co.in";
     const url = `https://api.crossref.org/works?query=${encodeURIComponent(
       query
     )}&filter=has-abstract:true&rows=${limit}&sort=published&order=desc`;
 
     const res = await fetch(url, {
       headers: {
-        "User-Agent": `ResearchPulse/1.0 (mailto:${mailto})`,
+        "User-Agent": `Lunor/1.0 (mailto:${mailto})`,
       },
       next: { revalidate: 7200 },
       signal: AbortSignal.timeout(10000),

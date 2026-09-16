@@ -13,10 +13,12 @@ export interface TopicItem {
   color: string;
 }
 
+export const BRAND_NAME = "Lunor";
+
 export const siteConfig = {
-  name: "ResearchPulse",
-  shortName: "Pulse",
-  tagline: "The daily intelligence and research companion for AI builders.",
+  name: BRAND_NAME,
+  shortName: "Lunor",
+  tagline: "Daily AI & Software Research",
   description:
     "Stay current with AI without information overload, while building a daily habit of reading high-quality research papers.",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://lunor.co.in",

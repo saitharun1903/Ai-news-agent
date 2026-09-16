@@ -21,7 +21,7 @@ export class NewsApiProvider implements NewsProvider {
         : `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=${limit}&apiKey=${apiKey}`;
 
       const res = await fetch(url, {
-        headers: { "User-Agent": "ResearchPulse/1.0" },
+        headers: { "User-Agent": "Lunor/1.0 (+https://lunor.co.in)" },
         next: { revalidate: 1800 },
         signal: AbortSignal.timeout(8000),
       });

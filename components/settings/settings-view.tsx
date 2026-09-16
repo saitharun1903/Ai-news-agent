@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { UserProfile } from "@/lib/db/types";
 import { siteConfig } from "@/config/site";
+import { LunorLogo } from "@/components/brand/lunor-logo";
 import {
   User,
   Bell,
@@ -64,7 +65,7 @@ export function SettingsView({ initialProfile }: SettingsViewProps) {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(profile, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "researchpulse-profile.json");
+    downloadAnchor.setAttribute("download", "lunor-profile.json");
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -77,13 +78,11 @@ export function SettingsView({ initialProfile }: SettingsViewProps) {
       {/* 1. Profile Header */}
       <div className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-[var(--accent)] text-white flex items-center justify-center font-bold text-xl shadow-xs">
-            RP
-          </div>
+          <LunorLogo size={56} className="shadow-xs rounded-2xl" />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight">
-                {profile.name || "ResearchPulse Reader"}
+                {profile.name || "Lunor Reader"}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20">
                 Active Member

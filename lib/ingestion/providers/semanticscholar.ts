@@ -28,7 +28,7 @@ export async function fetchSemanticScholarPapers(
     )}&limit=${limit}&fields=${fields}`;
 
     const headers: Record<string, string> = {
-      "User-Agent": "ResearchPulse/1.0 (academic-research-digest)",
+      "User-Agent": "Lunor/1.0 (academic-research-digest)",
     };
 
     if (process.env.SEMANTIC_SCHOLAR_API_KEY && process.env.SEMANTIC_SCHOLAR_API_KEY.trim() && process.env.SEMANTIC_SCHOLAR_API_KEY !== "dont know") {
@@ -128,7 +128,7 @@ export class SemanticScholarResearchProvider implements ResearchProvider {
       )}?fields=paperId,title,abstract,authors,year,citationCount,isOpenAccess,openAccessPdf,externalIds,url,fieldsOfStudy,publicationDate`;
 
       const headers: Record<string, string> = {
-        "User-Agent": "ResearchPulse/1.0 (academic-research-digest)",
+        "User-Agent": "Lunor/1.0 (academic-research-digest)",
       };
       if (process.env.SEMANTIC_SCHOLAR_API_KEY && process.env.SEMANTIC_SCHOLAR_API_KEY.trim() && process.env.SEMANTIC_SCHOLAR_API_KEY !== "dont know") {
         headers["x-api-key"] = process.env.SEMANTIC_SCHOLAR_API_KEY.trim();

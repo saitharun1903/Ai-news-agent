@@ -1,5 +1,5 @@
-﻿-- ==============================================================================
--- ResearchPulse Supabase / PostgreSQL + pgvector Migration Schema
+-- ==============================================================================
+-- Lunor Supabase / PostgreSQL + pgvector Migration Schema
 -- Run this in your Supabase SQL Editor to provision tables, vector extensions, and indexes.
 -- ==============================================================================
 

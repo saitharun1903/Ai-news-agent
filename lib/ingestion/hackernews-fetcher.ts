@@ -1,10 +1,10 @@
-﻿import { Article } from "@/lib/db/types";
+import { Article } from "@/lib/db/types";
 
 export async function fetchHackerNewsAIStories(): Promise<Article[]> {
   try {
     const url = "https://hn.algolia.com/api/v1/search_by_date?query=AI+OR+LLM+OR+DeepSeek+OR+OpenAI+OR+Claude+OR+Reasoning&tags=story&numericFilters=points>15&hitsPerPage=20";
     const res = await fetch(url, {
-      headers: { "User-Agent": "ResearchPulse/1.0" },
+      headers: { "User-Agent": "Lunor/1.0 (+https://lunor.co.in)" },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(10000),
     });

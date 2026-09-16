@@ -1,6 +1,6 @@
-﻿export async function register() {
+export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    console.log("[ResearchPulse] Background ingestion scheduler initialized.");
+    console.log("[Lunor] Background ingestion scheduler initialized.");
 
     // Hourly background synchronization job
     const SYNC_INTERVAL_MS = 60 * 60 * 1000;

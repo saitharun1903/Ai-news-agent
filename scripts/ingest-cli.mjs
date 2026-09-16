@@ -1,8 +1,8 @@
-﻿// CLI runner for ResearchPulse ingestion
+// CLI runner for Lunor ingestion
 import { runIngestionPipeline } from "../lib/ingestion/pipeline.ts";
 
 async function main() {
-  console.log("=== ResearchPulse Ingestion Runner ===");
+  console.log("=== Lunor Ingestion Runner ===");
   try {
     const res = await runIngestionPipeline();
     console.log("Ingestion completed successfully!");

@@ -27,7 +27,7 @@ const routes = [
 ];
 
 async function checkRoutes() {
-  console.log('--- Verifying ResearchPulse HTTP Endpoints ---');
+  console.log('--- Verifying Lunor HTTP Endpoints ---');
   let failures = 0;
   for (const r of routes) {
     try {

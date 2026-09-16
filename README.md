@@ -1,4 +1,4 @@
-﻿# ResearchPulse
+# Lunor
 
 > **The daily intelligence and research companion for AI builders.**
 > *Stay current with AI without information overload, while building a daily habit of reading high-quality research papers.*
@@ -7,7 +7,7 @@
 
 ## 1. Architecture Overview
 
-ResearchPulse is built as an editorial-grade, technical intelligence platform that transforms raw academic preprints and multi-source industry news into structured, actionable insights.
+Lunor is built as an editorial-grade, technical intelligence platform that transforms raw academic preprints and multi-source industry news into structured, actionable insights.
 
 ```
                     ┌─────────────────────────┐
@@ -93,7 +93,7 @@ Create a `.env.local` file (or copy `.env.example`):
 
 ```bash
 # Optional: Database (defaults to built-in SQLite persistence if omitted)
-# DATABASE_URL="postgresql://postgres:password@localhost:5432/researchpulse"
+# DATABASE_URL="postgresql://postgres:password@localhost:5432/lunor"
 # SUPABASE_URL=""
 # SUPABASE_ANON_KEY=""
 
@@ -107,7 +107,7 @@ NEXT_PUBLIC_DEFAULT_BRIEFING_TIME="08:30"
 NEXT_PUBLIC_ENABLE_DESKTOP_POPUP="true"
 ```
 
-*Note: ResearchPulse works 100% out of the box with real live data without any required API keys.*
+*Note: Lunor works 100% out of the box with real live data without any required API keys.*
 
 ---
 

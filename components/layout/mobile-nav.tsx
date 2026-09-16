@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { bottomSheetVariants, backdropVariants } from "@/lib/motion";
+import { LunorLogo } from "@/components/brand/lunor-logo";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -180,13 +181,16 @@ export function MobileNav() {
 
               {/* Sheet Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[var(--surface-soft)]">
-                <div>
-                  <h3 className="text-base font-bold text-[var(--text-primary)]">
-                    Navigation & Workspace
-                  </h3>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Explore deeper ResearchPulse modules
-                  </p>
+                <div className="flex items-center gap-2.5">
+                  <LunorLogo size={28} />
+                  <div>
+                    <h3 className="text-base font-bold text-[var(--text-primary)]">
+                      Lunor Workspace
+                    </h3>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      Explore deeper technical intelligence modules
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"

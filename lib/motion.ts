@@ -1,5 +1,5 @@
 /**
- * Centralized Motion Tokens & Transition System for ResearchPulse
+ * Centralized Motion Tokens & Transition System for Lunor
  * Designed for calm, fast, connected, and premium interactions.
  * Respects prefers-reduced-motion and avoids heavy GPU recalculations.
  */

@@ -36,7 +36,7 @@ export async function fetchArxivPapers(
     const url = `http://export.arxiv.org/api/query?search_query=${query}&sortBy=${sortBy}&sortOrder=descending&max_results=${maxResults}`;
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "ResearchPulse/1.0 (+https://researchpulse.dev)",
+        "User-Agent": "Lunor/1.0 (+https://lunor.co.in)",
       },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(12000),

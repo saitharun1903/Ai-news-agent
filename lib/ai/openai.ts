@@ -1,4 +1,4 @@
-﻿import { AIProvider, ConceptExplanation } from "./types";
+import { AIProvider, ConceptExplanation } from "./types";
 import { ArticleGroup, Paper, PaperChunk } from "@/lib/db/types";
 import { HeuristicLocalProvider } from "./local-heuristic";
 
@@ -73,7 +73,7 @@ export class OpenAIProvider implements AIProvider {
   async answerPaperQuestion(paper: Paper, question: string, chunks: PaperChunk[]): Promise<string> {
     const context = chunks.map((c) => `[${c.sectionTitle}]: ${c.content}`).join("\n\n");
     const res = await this.callOpenAI([
-      { role: "system", content: `You are ResearchPulse AI Assistant answering questions grounded in the paper "${paper.title}".` },
+      { role: "system", content: `You are Lunor AI Assistant answering questions grounded in the paper "${paper.title}".` },
       { role: "user", content: `Context:\n${context}\n\nQuestion: ${question}` },
     ]);
     return res || this.fallback.answerPaperQuestion(paper, question, chunks);

@@ -59,7 +59,7 @@ export default async function ArchivePage() {
               Architecture Guarantee: Rolling History &amp; Permanent Retention
             </h4>
             <p className="text-[var(--text-secondary)] leading-relaxed">
-              ResearchPulse maintains a rolling 10-day window for complete daily dispatches. Snapshots older than 10 days are pruned automatically.
+              Lunor maintains a rolling 10-day window for complete daily dispatches. Snapshots older than 10 days are pruned automatically.
               <strong className="text-[var(--text-primary)]"> However, items you save to Favorites, your Reading List, and your personal Notes remain permanently stored in your account and are never removed.</strong>
             </p>
           </div>

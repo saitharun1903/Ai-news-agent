@@ -16,7 +16,7 @@ export async function fetchHuggingFacePapers(): Promise<RawHuggingFacePaper[]> {
   try {
     const res = await fetch("https://huggingface.co/api/daily_papers", {
       headers: {
-        "User-Agent": "ResearchPulse/1.0",
+        "User-Agent": "Lunor/1.0 (+https://lunor.co.in)",
       },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(12000),

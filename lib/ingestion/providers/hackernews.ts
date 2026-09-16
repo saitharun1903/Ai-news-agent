@@ -16,7 +16,7 @@ export class HackerNewsProvider implements NewsProvider, CommunityProvider {
         : `https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=${limit}`;
 
       const res = await fetch(url, {
-        headers: { "User-Agent": "ResearchPulse/1.0" },
+        headers: { "User-Agent": "Lunor/1.0 (+https://lunor.co.in)" },
         next: { revalidate: 1800 },
         signal: AbortSignal.timeout(8000),
       });

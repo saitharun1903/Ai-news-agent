@@ -11,7 +11,7 @@ export class RedditCommunityProvider implements CommunityProvider {
       const url = `https://www.reddit.com/r/${subreddit}/hot.json?limit=${limit}`;
 
       const res = await fetch(url, {
-        headers: { "User-Agent": "ResearchPulse/1.0 (academic-community-signals)" },
+        headers: { "User-Agent": "Lunor/1.0 (academic-community-signals)" },
         signal: AbortSignal.timeout(6000),
       });
 

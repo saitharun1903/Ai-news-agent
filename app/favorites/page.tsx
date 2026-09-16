@@ -223,7 +223,7 @@ function SavedWorkstationContent() {
         paperEntries.push({
           title: f.title,
           id: f.entityId,
-          authors: f.metadata?.authors || ["ResearchPulse Contributor"],
+          authors: f.metadata?.authors || ["Lunor Contributor"],
           year: f.metadata?.year || new Date(f.createdAt).getFullYear(),
         });
       });
@@ -234,7 +234,7 @@ function SavedWorkstationContent() {
         paperEntries.push({
           title: r.title,
           id: r.itemId,
-          authors: ["ResearchPulse Researcher"],
+          authors: ["Lunor Researcher"],
           year: new Date(r.createdAt).getFullYear(),
         });
       });
@@ -246,13 +246,13 @@ function SavedWorkstationContent() {
 
     const bibtexContent = paperEntries
       .map((p, idx) => {
-        const cleanKey = `rp_${p.id.replace(/[^a-zA-Z0-9]/g, "_")}_${idx + 1}`;
+        const cleanKey = `lunor_${p.id.replace(/[^a-zA-Z0-9]/g, "_")}_${idx + 1}`;
         const authorStr = Array.isArray(p.authors) ? p.authors.join(" and ") : "Unknown Author";
         return `@article{${cleanKey},
   title = {${p.title.replace(/[\{\}]/g, "")}},
   author = {${authorStr}},
   year = {${p.year || 2026}},
-  journal = {ResearchPulse Academic Archive},
+  journal = {Lunor Academic Archive},
   url = {https://arxiv.org/abs/${p.id}}
 }`;
       })
@@ -263,7 +263,7 @@ function SavedWorkstationContent() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `researchpulse-bibliography-${new Date().toISOString().slice(0, 10)}.bib`);
+    link.setAttribute("download", `lunor-bibliography-${new Date().toISOString().slice(0, 10)}.bib`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

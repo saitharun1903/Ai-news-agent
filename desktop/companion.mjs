@@ -1,5 +1,5 @@
-﻿/**
- * ResearchPulse Desktop Morning Companion
+/**
+ * Lunor Desktop Morning Companion
  * Lightweight daemon that checks for the daily briefing and triggers a native desktop notification.
  */
 
@@ -8,7 +8,7 @@ import { exec } from "child_process";
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
-console.log("=== ResearchPulse Desktop Companion Running ===");
+console.log("=== Lunor Desktop Companion Running ===");
 console.log(`Target Application: ${APP_URL}`);
 
 let lastNotifiedDate = "";
@@ -47,7 +47,7 @@ async function checkMorningBriefing() {
 
 function triggerDesktopNotification() {
   console.log("[Companion] Triggering Morning AI Briefing Notification...");
-  const title = "ResearchPulse · Today in AI";
+  const title = "Lunor · Today in AI";
   const message = "Your morning AI intelligence and recommended research paper are ready.";
 
   if (process.platform === "win32") {
@@ -60,7 +60,7 @@ function triggerDesktopNotification() {
       $textNodes.Item(0).AppendChild($template.CreateTextNode("${title}")) | Out-Null
       $textNodes.Item(1).AppendChild($template.CreateTextNode("${message}")) | Out-Null
       $toast = [Windows.UI.Notifications.ToastNotification]::new($template)
-      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("ResearchPulse").Show($toast)
+      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Lunor").Show($toast)
     `;
     exec(`powershell -Command "${psScript.replace(/\n/g, " ")}"`, () => {});
   } else if (process.platform === "darwin") {

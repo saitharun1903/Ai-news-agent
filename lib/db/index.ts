@@ -65,7 +65,7 @@ function getDbPath(): string {
 const DEFAULT_PROFILE: UserProfile = {
   id: "user_primary",
   name: "AI Researcher",
-  email: "researcher@pulse.internal",
+  email: "researcher@lunor.internal",
   readingStreak: 0,
   longestStreak: 0,
   lastActiveDate: "",

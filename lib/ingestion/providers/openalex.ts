@@ -31,7 +31,7 @@ function reconstructAbstract(invertedIndex?: Record<string, number[]>): string {
 export class OpenAlexResearchProvider implements ResearchProvider {
   name = "OpenAlex";
   enabled = process.env.OPENALEX_ENABLED !== "false";
-  private mailto = process.env.OPENALEX_EMAIL || "pulse@researchpulse.dev";
+  private mailto = process.env.OPENALEX_EMAIL || "contact@lunor.co.in";
 
   async fetchLatest(options?: ResearchFetchOptions): Promise<Paper[]> {
     const query = options?.query || "computer science software engineering distributed systems";
@@ -48,7 +48,7 @@ export class OpenAlexResearchProvider implements ResearchProvider {
 
       const res = await fetch(url, {
         headers: {
-          "User-Agent": `ResearchPulse/1.0 (mailto:${this.mailto})`,
+          "User-Agent": `Lunor/1.0 (mailto:${this.mailto})`,
         },
         next: { revalidate: 3600 },
         signal: AbortSignal.timeout(10000),

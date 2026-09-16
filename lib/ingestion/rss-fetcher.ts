@@ -1,4 +1,4 @@
-﻿import { XMLParser } from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 import { Article, Source } from "@/lib/db/types";
 
 const parser = new XMLParser({
@@ -16,7 +16,7 @@ export async function fetchRssSource(source: Source): Promise<Article[]> {
   try {
     const res = await fetch(source.rssUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 ResearchPulse/1.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Lunor/1.0 (+https://lunor.co.in)",
         Accept: "application/rss+xml, application/xml, application/atom+xml, text/xml, */*",
       },
       next: { revalidate: 3600 },

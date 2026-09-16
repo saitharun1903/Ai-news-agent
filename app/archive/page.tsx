@@ -13,15 +13,26 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { getLunorBusinessDate, formatLunorDate, LUNOR_DEFAULT_TIMEZONE } from "@/lib/date";
+
 export const revalidate = 0; // dynamic
 
 export default async function ArchivePage() {
   const feeds = await db.getDailyFeeds(10);
+  const todayDate = getLunorBusinessDate(new Date(), LUNOR_DEFAULT_TIMEZONE);
+  const yesterdayDate = getLunorBusinessDate(
+    new Date(Date.now() - 24 * 60 * 60 * 1000),
+    LUNOR_DEFAULT_TIMEZONE
+  );
 
-  const getRelativeDayLabel = (index: number) => {
-    if (index === 0) return { label: "TODAY", color: "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--border)] font-bold" };
-    if (index === 1) return { label: "YESTERDAY", color: "bg-blue-50 text-blue-700 border-blue-200 font-semibold" };
-    return { label: `DAY -${index}`, color: "bg-[var(--surface-soft)] text-[var(--text-secondary)] border-[var(--border)] font-medium" };
+  const getRelativeDayLabel = (feedDate: string, index: number) => {
+    if (feedDate === todayDate) {
+      return { label: "TODAY", color: "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--border)] font-bold" };
+    }
+    if (feedDate === yesterdayDate) {
+      return { label: "YESTERDAY", color: "bg-blue-50 text-blue-700 border-blue-200 font-semibold" };
+    }
+    return { label: `DAY -${index + 1}`, color: "bg-[var(--surface-soft)] text-[var(--text-secondary)] border-[var(--border)] font-medium" };
   };
 
   return (
@@ -70,13 +81,8 @@ export default async function ArchivePage() {
       {feeds.length > 0 ? (
         <div className="space-y-4">
           {feeds.map((feed, idx) => {
-            const rel = getRelativeDayLabel(idx);
-            const formattedDate = new Date(feed.date + "T00:00:00").toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            });
+            const rel = getRelativeDayLabel(feed.date, idx);
+            const formattedDate = formatLunorDate(feed.date, LUNOR_DEFAULT_TIMEZONE);
 
             return (
               <div

@@ -5,6 +5,7 @@ import {
   UserFavorite,
   ReadingSession,
   Note,
+  DailyFeedSnapshot,
 } from "./types";
 
 function getSupabaseClient() {
@@ -435,5 +436,197 @@ export async function deleteNoteFromDb(userId: string, noteId: string): Promise<
     return !error;
   } catch {
     return false;
+  }
+}
+
+// -------------------------------------------------------------
+// DAILY FEEDS SNAPSHOTS
+// -------------------------------------------------------------
+export function mapDailyFeedRowToModel(row: any): DailyFeedSnapshot {
+  return {
+    id: row.id,
+    date: typeof row.edition_date === "string" ? row.edition_date.split("T")[0] : row.edition_date,
+    timezone: row.timezone || "Asia/Kolkata",
+    generatedAt: row.generated_at || new Date().toISOString(),
+    status: row.status || "active",
+    title: row.title,
+    summary: row.summary,
+    synthesis: row.synthesis,
+    leadStory: row.lead_story || null,
+    stories: Array.isArray(row.stories) ? row.stories : [],
+    papers: Array.isArray(row.papers) ? row.papers : [],
+    paperOfDay: row.paper_of_day || null,
+    topicCounts: Array.isArray(row.topic_counts) ? row.topic_counts : [],
+  };
+}
+
+export async function fetchDailyFeedFromDb(
+  editionDate: string,
+  timezone: string = "Asia/Kolkata"
+): Promise<DailyFeedSnapshot | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("daily_feeds")
+      .select("*")
+      .eq("edition_date", editionDate)
+      .eq("timezone", timezone)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return mapDailyFeedRowToModel(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function upsertDailyFeedInDb(feed: DailyFeedSnapshot): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const row = {
+      id: feed.id || `feed_${feed.date}`,
+      edition_date: feed.date,
+      timezone: feed.timezone || "Asia/Kolkata",
+      generated_at: feed.generatedAt || new Date().toISOString(),
+      published_at: new Date().toISOString(),
+      status: feed.status || "active",
+      title: feed.title,
+      summary: feed.summary,
+      synthesis: feed.synthesis,
+      lead_story: feed.leadStory || null,
+      stories: feed.stories || [],
+      papers: feed.papers || [],
+      paper_of_day: feed.paperOfDay || null,
+      topic_counts: feed.topicCounts || [],
+    };
+
+    const { error } = await supabase.from("daily_feeds").upsert(row, {
+      onConflict: "edition_date, timezone",
+    });
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchDailyFeedsFromDb(
+  limit: number = 10,
+  timezone: string = "Asia/Kolkata"
+): Promise<DailyFeedSnapshot[] | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("daily_feeds")
+      .select("*")
+      .eq("timezone", timezone)
+      .order("edition_date", { ascending: false })
+      .limit(limit);
+
+    if (error || !data || data.length === 0) return null;
+    return data.map(mapDailyFeedRowToModel);
+  } catch {
+    return null;
+  }
+}
+
+// -------------------------------------------------------------
+// GENERATION JOBS AUDIT LOG
+// -------------------------------------------------------------
+export async function createGenerationJobInDb(job: {
+  id: string;
+  jobName?: string;
+  editionDate: string;
+  status?: string;
+  attempt?: number;
+  recordsFetched?: number;
+  recordsInserted?: number;
+  recordsUpdated?: number;
+  duplicatesRemoved?: number;
+  errorMessage?: string;
+}): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const row = {
+      id: job.id,
+      job_name: job.jobName || "daily_edition",
+      edition_date: job.editionDate,
+      started_at: new Date().toISOString(),
+      status: job.status || "running",
+      attempt: job.attempt || 1,
+      records_fetched: job.recordsFetched || 0,
+      records_inserted: job.recordsInserted || 0,
+      records_updated: job.recordsUpdated || 0,
+      duplicates_removed: job.duplicatesRemoved || 0,
+      error_message: job.errorMessage || null,
+    };
+
+    const { error } = await supabase.from("generation_jobs").insert(row);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function updateGenerationJobInDb(
+  id: string,
+  updates: {
+    status?: string;
+    completedAt?: string;
+    recordsFetched?: number;
+    recordsInserted?: number;
+    recordsUpdated?: number;
+    duplicatesRemoved?: number;
+    errorMessage?: string;
+  }
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const rowUpdates: any = {};
+    if (updates.status !== undefined) rowUpdates.status = updates.status;
+    if (updates.completedAt !== undefined) rowUpdates.completed_at = updates.completedAt;
+    if (updates.recordsFetched !== undefined) rowUpdates.records_fetched = updates.recordsFetched;
+    if (updates.recordsInserted !== undefined) rowUpdates.records_inserted = updates.recordsInserted;
+    if (updates.recordsUpdated !== undefined) rowUpdates.records_updated = updates.recordsUpdated;
+    if (updates.duplicatesRemoved !== undefined) rowUpdates.duplicates_removed = updates.duplicatesRemoved;
+    if (updates.errorMessage !== undefined) rowUpdates.error_message = updates.errorMessage;
+
+    const { error } = await supabase.from("generation_jobs").update(rowUpdates).eq("id", id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchLatestGenerationJob(editionDate?: string): Promise<any | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from("generation_jobs")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(1);
+
+    if (editionDate) {
+      query = query.eq("edition_date", editionDate);
+    }
+
+    const { data, error } = await query;
+    if (error || !data || data.length === 0) return null;
+    return data[0];
+  } catch {
+    return null;
   }
 }

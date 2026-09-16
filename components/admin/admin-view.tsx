@@ -12,8 +12,10 @@ import {
   Sparkles,
   ExternalLink,
   ShieldCheck,
+  Calendar,
+  Zap,
 } from "lucide-react";
-import { IngestionLog, Source } from "@/lib/db/types";
+import { IngestionLog, Source, DailyFeedSnapshot } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +26,10 @@ interface AdminViewProps {
   groupCount: number;
   paperCount: number;
   chunkCount: number;
+  todayDate?: string;
+  todayFeed?: DailyFeedSnapshot | null;
+  latestJob?: any | null;
+  nextScheduledRun?: string;
 }
 
 export function AdminView({
@@ -33,11 +39,17 @@ export function AdminView({
   groupCount,
   paperCount,
   chunkCount,
+  todayDate = "2026-09-17",
+  todayFeed = null,
+  latestJob = null,
+  nextScheduledRun = "September 18, 2026, 12:00 AM IST",
 }: AdminViewProps) {
   const [sources, setSources] = useState<Source[]>(initialSources);
   const [logs, setLogs] = useState<IngestionLog[]>(initialLogs);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [currentFeed, setCurrentFeed] = useState<DailyFeedSnapshot | null>(todayFeed);
+  const [jobInfo, setJobInfo] = useState<any | null>(latestJob);
 
   const handleTriggerSync = async () => {
     setIsSyncing(true);
@@ -63,15 +75,48 @@ export function AdminView({
     }
   };
 
-  const handleRegenerateBriefing = async () => {
+  const handleTriggerMidnightGeneration = async (force: boolean = true) => {
     setIsSyncing(true);
-    setSyncStatus("Regenerating Today's AI Briefing synthesis...");
+    setSyncStatus(`Triggering Midnight Generation for ${todayDate} (force=${force})...`);
     try {
-      const res = await fetch("/api/briefing", { method: "POST" });
+      const res = await fetch(
+        `/api/cron/daily?secret=lunor_migrate_prod_2026&force=${force}`,
+        { method: "POST" }
+      );
       const data = await res.json();
-      setSyncStatus(`Briefing regenerated for ${data.date} with ${data.topStories?.length} top stories.`);
+      if (data.success) {
+        setSyncStatus(
+          `Generated edition for ${data.editionDate} (Snapshot: ${data.snapshotId}) in ${data.durationMs}ms with ${data.storiesCount} stories and ${data.papersCount} papers.`
+        );
+        // Refresh local view
+        const todayRes = await fetch(`/api/today`);
+        const todayData = await todayRes.json();
+        if (todayData.feed) setCurrentFeed(todayData.feed);
+      } else {
+        setSyncStatus(`Generation failed: ${data.error || "Unknown error"}`);
+      }
     } catch (err: any) {
-      setSyncStatus(`Briefing failed: ${err.message}`);
+      setSyncStatus(`Request failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleApplyMigration = async () => {
+    setIsSyncing(true);
+    setSyncStatus("Applying database schema migrations (daily_feeds, generation_jobs)...");
+    try {
+      const res = await fetch("/api/admin/migrate?secret=lunor_migrate_prod_2026", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncStatus("Database schema migration applied successfully!");
+      } else {
+        setSyncStatus(`Migration failed: ${JSON.stringify(data.results)}`);
+      }
+    } catch (err: any) {
+      setSyncStatus(`Migration error: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -94,16 +139,27 @@ export function AdminView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={handleRegenerateBriefing}
+            onClick={handleApplyMigration}
             disabled={isSyncing}
             className="text-xs gap-1.5 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span>Re-synthesize Briefing</span>
+            <Database className="h-3.5 w-3.5 text-indigo-500" />
+            <span>Apply DB Schema</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleTriggerMidnightGeneration(true)}
+            disabled={isSyncing}
+            className="text-xs gap-1.5 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-soft)]"
+          >
+            <Zap className="h-3.5 w-3.5 text-amber-500" />
+            <span>Trigger Daily Roll</span>
           </Button>
 
           <Button
@@ -125,6 +181,58 @@ export function AdminView({
           <span>{syncStatus}</span>
         </div>
       )}
+
+      {/* Midnight Daily Refresh & Snapshot Engine Card */}
+      <section className="rounded-3xl border border-[var(--border)] bg-white p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[var(--text-primary)]">
+                Midnight Daily Refresh System (Asia/Kolkata)
+              </h2>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Authoritative publishing boundary at 12:00 AM IST. Prunes rolling archive older than 10 days.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={currentFeed ? "success" : "warning"}
+              className="text-xs px-2.5 py-1 font-mono"
+            >
+              {currentFeed ? "EDITION ACTIVE" : "EDITION PENDING"}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 space-y-1">
+            <span className="text-[var(--text-secondary)] font-medium">Business Edition Date</span>
+            <div className="text-lg font-bold font-mono text-[var(--text-primary)]">{todayDate}</div>
+            <span className="text-[11px] text-[var(--text-muted)]">Boundary: Asia/Kolkata (UTC+05:30)</span>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 space-y-1">
+            <span className="text-[var(--text-secondary)] font-medium">Next Scheduled Generation</span>
+            <div className="text-sm font-bold font-mono text-[var(--text-primary)] mt-1">{nextScheduledRun}</div>
+            <span className="text-[11px] text-[var(--text-muted)]">Vercel Cron: 18:30 UTC daily</span>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 space-y-1">
+            <span className="text-[var(--text-secondary)] font-medium">Latest Generation Job</span>
+            <div className="text-sm font-bold font-mono text-[var(--text-primary)] mt-1">
+              {jobInfo?.status?.toUpperCase() || (currentFeed ? "SUCCESS" : "PENDING")}
+            </div>
+            <span className="text-[11px] text-[var(--text-muted)]">
+              {currentFeed?.leadStory?.title ? `Lead: ${currentFeed.leadStory.title.slice(0, 30)}...` : "Waiting for next cycle"}
+            </span>
+          </div>
+        </div>
+      </section>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

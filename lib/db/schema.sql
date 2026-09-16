@@ -178,6 +178,43 @@ create table if not exists public.daily_briefings (
   published_at timestamptz default now()
 );
 
+-- DAILY FEEDS SNAPSHOT ARCHIVE
+create table if not exists public.daily_feeds (
+  id text primary key,
+  edition_date date not null,
+  timezone text not null default 'Asia/Kolkata',
+  generated_at timestamptz not null default now(),
+  published_at timestamptz default now(),
+  status text not null default 'active',
+  title text not null,
+  summary text not null,
+  synthesis text not null,
+  lead_story jsonb,
+  stories jsonb not null default '[]'::jsonb,
+  papers jsonb not null default '[]'::jsonb,
+  paper_of_day jsonb,
+  topic_counts jsonb not null default '[]'::jsonb,
+  created_at timestamptz default now(),
+  constraint uq_daily_feeds_edition_timezone unique (edition_date, timezone)
+);
+
+-- GENERATION JOBS AUDIT LOG
+create table if not exists public.generation_jobs (
+  id text primary key,
+  job_name text not null default 'daily_edition',
+  edition_date date not null,
+  started_at timestamptz not null default now(),
+  completed_at timestamptz,
+  status text not null default 'running',
+  attempt integer not null default 1,
+  records_fetched integer not null default 0,
+  records_inserted integer not null default 0,
+  records_updated integer not null default 0,
+  duplicates_removed integer not null default 0,
+  error_message text,
+  created_at timestamptz default now()
+);
+
 -- INDEXES FOR FAST QUERYING
 create index if not exists idx_bookmarks_user on public.bookmarks(user_id);
 create index if not exists idx_favorites_user on public.favorites(user_id);
@@ -185,6 +222,8 @@ create index if not exists idx_reading_sessions_user on public.reading_sessions(
 create index if not exists idx_notes_user on public.notes(user_id);
 create index if not exists idx_articles_published on public.articles(published_at desc);
 create index if not exists idx_papers_published on public.papers(published_at desc);
+create index if not exists idx_daily_feeds_edition on public.daily_feeds(edition_date desc, timezone);
+create index if not exists idx_generation_jobs_date on public.generation_jobs(edition_date desc, started_at desc);
 
 -- ROW LEVEL SECURITY (RLS)
 alter table public.profiles enable row level security;
@@ -236,6 +275,20 @@ create policy "Users can manage own notes"
   on public.notes for all
   using (auth.uid()::text = user_id or user_id = 'user_primary')
   with check (auth.uid()::text = user_id or user_id = 'user_primary');
+
+-- Policies for Daily Feeds & Generation Jobs
+alter table public.daily_feeds enable row level security;
+alter table public.generation_jobs enable row level security;
+
+drop policy if exists "Daily feeds are viewable by everyone" on public.daily_feeds;
+create policy "Daily feeds are viewable by everyone"
+  on public.daily_feeds for select
+  using (true);
+
+drop policy if exists "Generation jobs are viewable by everyone" on public.generation_jobs;
+create policy "Generation jobs are viewable by everyone"
+  on public.generation_jobs for select
+  using (true);
 
 -- SEED PRIMARY USER PROFILE (Idempotent)
 insert into public.profiles (

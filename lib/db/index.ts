@@ -25,6 +25,7 @@ import {
 } from "./types";
 import { DEFAULT_SOURCES } from "@/lib/ingestion/sources";
 import { mergePaperPreprints, filterNeverShownAsNew } from "@/lib/ingestion/canonicalizer";
+import { getLunorBusinessDate, LUNOR_DEFAULT_TIMEZONE } from "@/lib/date";
 import {
   fetchUserProfileFromDb,
   upsertUserProfileInDb,
@@ -39,6 +40,9 @@ import {
   fetchNotesFromDb,
   saveNoteToDb,
   deleteNoteFromDb,
+  fetchDailyFeedFromDb,
+  upsertDailyFeedInDb,
+  fetchDailyFeedsFromDb,
 } from "./supabase-adapter";
 
 interface DatabaseData {
@@ -1226,7 +1230,7 @@ class StorageRepository {
 
     for (let i = 0; i < 10; i++) {
       const d = new Date(now - i * 86400000);
-      const dateStr = d.toISOString().split("T")[0];
+      const dateStr = getLunorBusinessDate(d, "Asia/Kolkata");
       if (existingDates.has(dateStr)) continue;
 
       const leadStory = groups[i % groups.length] || null;
@@ -1240,10 +1244,10 @@ class StorageRepository {
       const snapshot: DailyFeedSnapshot = {
         id: `feed_${dateStr}`,
         date: dateStr,
-        timezone: this.data.profile.timezone || "Asia/Kolkata",
+        timezone: "Asia/Kolkata",
         generatedAt: d.toISOString(),
         status: i === 0 ? "active" : "archived",
-        title: `Daily Briefing · ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+        title: `Daily Briefing · ${d.toLocaleDateString("en-US", { timeZone: "Asia/Kolkata", month: "short", day: "numeric" })}`,
         summary: `Daily research dispatch with ${dayStories.length} stories and ${dayPapers.length} research papers.`,
         synthesis: `Key developments in ${leadStory?.topic || "frontier AI"}: model reasoning scaling, architectural optimizations, and open-source releases.`,
         leadStory,
@@ -1320,12 +1324,42 @@ class StorageRepository {
   }
 
   // --- Rolling 10-Day Snapshot Archive ---
-  async getDailyFeed(date: string): Promise<DailyFeedSnapshot | null> {
+  async getDailyFeed(
+    date?: string,
+    timezone: string = LUNOR_DEFAULT_TIMEZONE
+  ): Promise<DailyFeedSnapshot | null> {
+    const targetDate = date || getLunorBusinessDate(new Date(), timezone);
+
+    // 1. Try Supabase persistent table
+    const dbFeed = await fetchDailyFeedFromDb(targetDate, timezone);
+    if (dbFeed) {
+      const data = this.load();
+      // Keep memory cache updated
+      const idx = data.dailyFeeds.findIndex((f) => f.date === targetDate);
+      if (idx >= 0) data.dailyFeeds[idx] = dbFeed;
+      else data.dailyFeeds.unshift(dbFeed);
+      return dbFeed;
+    }
+
+    // 2. Fallback to in-memory/JSON snapshot for that EXACT date (NEVER return yesterday silently!)
     const data = this.load();
-    return (data.dailyFeeds || []).find((f) => f.date === date) || null;
+    const localFeed = (data.dailyFeeds || []).find((f) => f.date === targetDate);
+    return localFeed || null;
   }
 
-  async getDailyFeeds(limit: number = 10): Promise<DailyFeedSnapshot[]> {
+  async getDailyFeeds(
+    limit: number = 10,
+    timezone: string = LUNOR_DEFAULT_TIMEZONE
+  ): Promise<DailyFeedSnapshot[]> {
+    // 1. Try Supabase
+    const dbFeeds = await fetchDailyFeedsFromDb(limit, timezone);
+    if (dbFeeds && dbFeeds.length > 0) {
+      const data = this.load();
+      data.dailyFeeds = dbFeeds;
+      return dbFeeds;
+    }
+
+    // 2. Fallback to local memory / file
     const data = this.load();
     return (data.dailyFeeds || [])
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -1376,6 +1410,10 @@ class StorageRepository {
     }
 
     this.schedulePersist();
+
+    // Persist to Supabase daily_feeds table (idempotent upsert)
+    await upsertDailyFeedInDb(feed).catch(() => {});
+
     return feed;
   }
 

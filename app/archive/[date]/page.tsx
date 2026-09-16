@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { ZeroClickStoryCard } from "@/components/feed/zero-click-story-card";
 import { ZeroClickResearchCard } from "@/components/feed/zero-click-research-card";
 
+import { formatLunorDate, LUNOR_DEFAULT_TIMEZONE } from "@/lib/date";
+
 export const revalidate = 0; // dynamic
 
 export default async function DailySnapshotPage({
@@ -47,12 +49,7 @@ export default async function DailySnapshotPage({
     );
   }
 
-  const formattedDate = new Date(snapshot.date + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDate = formatLunorDate(snapshot.date, LUNOR_DEFAULT_TIMEZONE);
 
   return (
     <div className="space-y-6 font-sans">

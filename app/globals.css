@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Sophisticated Light Palette (Porcelain / Ink / Warm Slate / Deep Cobalt) */
+    --background: 60 5% 98%;            /* #FAFAF9 Warm porcelain / off-white */
+    --foreground: 222 47% 11%;          /* #0F172A Deep ink / charcoal */
+    --surface: 0 0% 100%;               /* #FFFFFF Crisp White */
+    --surface-elevated: 0 0% 100%;      /* #FFFFFF */
+    --surface-soft: 210 40% 98%;        /* #F8FAFC Soft neutral */
+    --surface-muted: 220 14% 96%;       /* #F1F5F9 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 222 47% 11%;             /* #0F172A Ink */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;         /* #F1F5F9 Warm slate tint */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;    /* #64748B Warm slate secondary */
+
+    --text-primary: 222 47% 11%;        /* #0F172A Deep ink */
+    --text-secondary: 215 25% 27%;      /* #334155 Warm slate */
+    --text-muted: 215 16% 47%;          /* #64748B */
+
+    --accent: 221 83% 53%;              /* #1D4ED8 / #2563EB Deep cobalt blue */
+    --accent-hover: 224 76% 48%;        /* #1E40AF */
+    --accent-soft: 214 100% 97%;        /* #EFF6FF Soft cobalt tint */
+    --accent-foreground: 0 0% 100%;
+
+    --accent-terracotta: 21 86% 40%;    /* #C2410C Muted coral / terracotta */
+    --accent-terracotta-soft: 33 100% 96%; /* #FFF7ED */
+
+    --support-sage: 142 71% 29%;        /* #15803D Soft olive / sage green */
+    --support-sage-soft: 138 76% 97%;   /* #F0FDF4 */
+
+    --border: 214 32% 91%;              /* #E2E8F0 Subtle slate border */
+    --border-subtle: 210 40% 96.1%;     /* #F1F5F9 */
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --success: 142 71% 29%;             /* #15803D Soft sage */
+    --warning: 38 92% 50%;              /* #F59E0B Warm amber */
+    --error: 0 84% 60%;                 /* #EF4444 Restrained red */
+
+    --radius: 0.75rem;
+    --radius-pill: 9999px;
+
+    --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    @apply antialiased font-sans selection:bg-blue-600/15 selection:text-blue-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Subtle Technical Status Pulse */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.9); }
+}
+
+.animate-pulse-subtle {
+  animation: status-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Polished Layered Shadow System */
+.shadow-navbar {
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+}
+
+.shadow-card {
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+.shadow-modal {
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.14), 0 8px 20px -4px rgba(15, 23, 42, 0.06);
+}
+
+/* 3D Motion Helper Classes (Subtle 2-3° depth only) */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-800 {
+  perspective: 800px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Accessibility: Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1137,7 +1137,7 @@ class StorageRepository {
     };
     data.bookmarks.unshift(newBookmark);
     this.schedulePersist();
-    saveBookmarkToDb(newBookmark).catch(() => {});
+    await saveBookmarkToDb(newBookmark).catch(() => {});
     return newBookmark;
   }
 
@@ -1145,7 +1145,7 @@ class StorageRepository {
     const data = this.load();
     data.bookmarks = data.bookmarks.filter((b) => b.itemId !== itemId);
     this.schedulePersist();
-    deleteBookmarkFromDb(userId, itemId).catch(() => {});
+    await deleteBookmarkFromDb(userId, itemId).catch(() => {});
   }
 
   // --- Notes & Highlights ---
@@ -1178,7 +1178,7 @@ class StorageRepository {
     };
     data.notes.unshift(newNote);
     this.schedulePersist();
-    saveNoteToDb(newNote).catch(() => {});
+    await saveNoteToDb(newNote).catch(() => {});
     return newNote;
   }
 
@@ -1186,7 +1186,7 @@ class StorageRepository {
     const data = this.load();
     data.notes = data.notes.filter((n) => n.id !== id);
     this.schedulePersist();
-    deleteNoteFromDb(userId, id).catch(() => {});
+    await deleteNoteFromDb(userId, id).catch(() => {});
   }
 
   // --- Ingestion Logs ---
@@ -1295,7 +1295,7 @@ class StorageRepository {
     };
     data.favorites.unshift(newFav);
     this.schedulePersist();
-    saveFavoriteToDb(newFav).catch(() => {});
+    await saveFavoriteToDb(newFav).catch(() => {});
     return newFav;
   }
 
@@ -1306,7 +1306,7 @@ class StorageRepository {
     data.favorites = data.favorites.filter(
       (f) => !(f.entityType === entityType && f.entityId === entityId)
     );
-    deleteFavoriteFromDb(userId, entityType, entityId).catch(() => {});
+    await deleteFavoriteFromDb(userId, entityType, entityId).catch(() => {});
     if (data.favorites.length !== initialLen) {
       this.schedulePersist();
       return true;

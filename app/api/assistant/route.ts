@@ -28,28 +28,33 @@ export async function POST(req: NextRequest) {
       return limitedRes;
     }
 
+    const withHeaders = (response: NextResponse) => {
+      response.headers.set("X-RateLimit-Limit", String(rl.limit));
+      response.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+      response.headers.set("X-RateLimit-Reset", String(rl.reset));
+      return response;
+    };
+
     const { paperId, question } = await req.json();
     if (!paperId || !question) {
-      return NextResponse.json({ error: "Missing paperId or question" }, { status: 400 });
+      return withHeaders(NextResponse.json({ error: "Missing paperId or question" }, { status: 400 }));
     }
 
     const paper = await db.getPaperById(paperId);
     if (!paper) {
-      return NextResponse.json({ error: "Paper not found" }, { status: 404 });
+      return withHeaders(NextResponse.json({ error: "Paper not found" }, { status: 404 }));
     }
 
     const chunks = await db.getPaperChunks(paper.id);
     const answer = await ai.answerPaperQuestion(paper, question, chunks);
 
-    const res = NextResponse.json({
-      answer,
-      paperId: paper.id,
-      paperTitle: paper.title,
-    });
-    res.headers.set("X-RateLimit-Limit", String(rl.limit));
-    res.headers.set("X-RateLimit-Remaining", String(rl.remaining));
-    res.headers.set("X-RateLimit-Reset", String(rl.reset));
-    return res;
+    return withHeaders(
+      NextResponse.json({
+        answer,
+        paperId: paper.id,
+        paperTitle: paper.title,
+      })
+    );
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

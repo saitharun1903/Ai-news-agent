@@ -33,15 +33,18 @@
 ## 4. Fixes Implemented
 1. **Eliminated `mode="wait"` & Adopted Non-Blocking CSS Transitions**:
    - Replaced heavy JavaScript-driven `AnimatePresence` with GPU-accelerated CSS keyframe transitions:
-     - Mobile: `lunorPageEnterMobile` (160ms, translateY: 4px → 0, opacity: 0 → 1, snappy `[0, 0, 0.2, 1]` curve).
-     - Desktop: `lunorPageEnterDesktop` (240ms, translateY: 6px → 0, standard ease).
-     - Reduced Motion: Instant 0ms render.
+     - Mobile (< 768px): `lunorPageEnterMobile` (160ms, translateY: 4px → 0, opacity: 0 → 1, snappy `[0, 0, 0.2, 1]` curve).
+     - Tablet (768px – 1023px): `lunorPageEnterTablet` (190ms, translateY: 4px → 0, opacity: 0 → 1, subtle ease).
+     - Desktop (≥ 1024px): `lunorPageEnterDesktop` (240ms, translateY: 6px → 0, standard ease).
+     - Reduced Motion: Instant 0ms static render (`animation: none !important`).
 2. **Instant Optimistic Tap Feedback (<50ms)**:
    - Added `pendingPath` state to `MobileNav`. Tapping any navigation destination immediately applies the active highlight pill (<50ms) before the route finishes mounting.
-3. **Route Skeletons (`loading.tsx`)**:
-   - Added instant skeleton components to `/`, `/today`, `/news`, and `/research`, eliminating blank or frozen screens.
-4. **Enabled Smart Prefetching**:
-   - Added `prefetch={true}` to all primary mobile and desktop navigation links, ensuring RSC payloads are preloaded in the background.
+3. **Route Skeletons Across All Routes (`loading.tsx`)**:
+   - Added instant skeleton components to `/`, `/today`, `/news`, `/research`, `/topics`, `/favorites`, `/profile`, `/settings`, and `/saved`, eliminating blank or frozen screens.
+4. **Network-Aware Intelligent Prefetching (`useNetworkAwarePrefetch`)**:
+   - Primary and drawer links use network-aware prefetching:
+     - 4G / Wi-Fi: `prefetch={true}` (preloads RSC payload in background).
+     - Save-Data / 2G / Slow Connections: `prefetch={false}` (conserves mobile cellular bandwidth).
 5. **Replaced Full Reloads with Client Navigation**:
    - Converted `window.location.href = "/today"` to `router.push("/today")` in `AppShell`.
 6. **Disabled 3D Tilt & Shared Layout on Mobile**:
@@ -58,14 +61,21 @@
 ---
 
 ## 6. API Request & Data Fetching Improvements
-- All primary routes (`/`, `/today`, `/news`, `/research`) run as Server Components with 60s ISR revalidation.
+- All primary routes (`/`, `/today`, `/news`, `/research`, `/topics`) run as Server Components with 60s ISR revalidation.
 - Navigating between routes reuses cached RSC payloads preloaded by `next/link`.
-- User preferences and profile are queried concurrently on the server (`Promise.all`) with zero sequential waterfalls.
+- Database query waterfalls eliminated by parallelizing independent queries via `Promise.all` across:
+  - `app/page.tsx`: `[articleGroups, allPapers, paperOfDay, ingestionLogs]`
+  - `app/today/page.tsx`: `[articleGroups, allPapers, paperOfDay, ingestionLogs]`
+  - `app/news/page.tsx`: `[allGroups, allPapers]`
+  - `app/research/page.tsx`: `[papers, profile]`
+  - `app/topics/page.tsx`: `[papers, groups]`
+  - `app/settings/page.tsx`: `[profile, analytics]`
 
 ---
 
 ## 7. Image Improvements
-- `Next/Image` is used with responsive `sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"`.
+- `Next/Image` configured with modern `formats: ["image/avif", "image/webp"]` for up to 70% smaller mobile payloads.
+- Responsive `sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"`.
 - Priority loading is restricted to the single lead featured story; all secondary cards use lazy loading (`loading="lazy"`).
 - Raw `<img>` tags are confined to SVG Data URIs where Next.js image optimization is unnecessary.
 

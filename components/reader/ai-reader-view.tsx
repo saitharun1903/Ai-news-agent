@@ -58,7 +58,7 @@ export function AIReaderView({ paper, chunks }: AIReaderViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      text: `Research Assistant active for "${paper.title}". I am grounded in the full text and methodology of this paper. Ask any question or click a prompt shortcut below.`,
+      text: `Research Assistant active for "${paper.title}". I am grounded in the full text and methodology of this paper. Ask any question or select a suggested prompt below.`,
     },
   ]);
   const [inputQuestion, setInputQuestion] = useState("");
@@ -629,10 +629,10 @@ export function AIReaderView({ paper, chunks }: AIReaderViewProps) {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Prompt Shortcuts */}
+            {/* Suggested Prompts */}
             <div className="p-3 border-t border-[var(--surface-soft)] bg-[var(--surface-soft)]">
               <div className="text-xs font-medium text-[var(--text-muted)] mb-2 px-1">
-                Prompt Shortcuts
+                Suggested Prompts
               </div>
               <div className="flex flex-wrap gap-1">
                 {[
@@ -855,7 +855,7 @@ export function AIReaderView({ paper, chunks }: AIReaderViewProps) {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Prompt Shortcuts */}
+              {/* Suggested Prompts */}
               <div className="p-2.5 border-t border-[var(--surface-soft)] bg-[var(--surface-soft)]">
                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {[

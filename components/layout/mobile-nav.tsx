@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Search,
   Sparkles,
   Compass,
   BookOpen,
@@ -204,6 +205,30 @@ export function MobileNav() {
 
               {/* Links List with 48px touch targets */}
               <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    (window as any).__openCommandPalette?.();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-transparent hover:bg-[var(--surface-soft)] text-[var(--text-secondary)] transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-2.5 rounded-xl text-[var(--accent)] bg-[var(--accent-soft)]">
+                      <Search className="h-5 w-5" />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">
+                        Search Intelligence
+                      </span>
+                      <span className="text-xs text-[var(--text-muted)]">
+                        Search news, papers, projects, and topics
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                </button>
+
                 {moreItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname.startsWith(item.href);

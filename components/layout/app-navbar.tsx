@@ -11,7 +11,6 @@ import {
   Bookmark,
   Bell,
   User,
-  Command,
   ChevronDown,
   History,
   FileText,
@@ -249,19 +248,16 @@ export function AppNavbar({ onOpenSearch, onOpenBriefing }: AppNavbarProps) {
 
         {/* Right: Search, Notifications, Profile */}
         <div className="flex items-center gap-2">
-          {/* Quick Search Trigger (Cmd+K) */}
+          {/* Quick Search Trigger */}
           <button
             type="button"
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-white hover:bg-[var(--surface-soft)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shadow-2xs font-sans group"
-            title="Search (Cmd+K)"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-white hover:bg-[var(--surface-soft)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shadow-2xs font-sans group active:scale-95 touch-target"
+            title="Search"
             aria-label="Search papers and news"
           >
             <Search className="h-3.5 w-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors" />
-            <span className="hidden sm:inline font-medium">Search</span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-soft)] text-[var(--text-muted)] border border-[var(--border)]">
-              <Command className="h-2.5 w-2.5" /> K
-            </kbd>
+            <span className="font-medium">Search</span>
           </button>
 
           {/* Daily Briefing / Notifications Trigger */}

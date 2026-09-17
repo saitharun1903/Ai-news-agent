@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 import { FileText, BookOpen, Trash2, ArrowRight, Download, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,8 @@ import { Button } from "@/components/ui/button";
 export const revalidate = 0;
 
 export default async function NotesPage() {
-  const notes = await db.getNotes();
+  const userId = await getEffectiveUserId();
+  const notes = await db.getNotes(undefined, userId);
 
   // Group notes by topic
   const groupedByTopic = new Map<string, typeof notes>();

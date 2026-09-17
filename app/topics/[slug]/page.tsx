@@ -46,6 +46,7 @@ const TOPIC_ALIASES: Record<string, string> = {
   languages: "programming-languages",
   se: "software-engineering",
   software: "software-engineering",
+  softwareengineering: "software-engineering",
   sec: "security",
   security: "security",
   crypto: "security",

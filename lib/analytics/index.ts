@@ -371,9 +371,9 @@ export class AnalyticsService {
   static async getTopicAffinity(userId: string): Promise<TopicAffinityItem[]> {
     const [sessions, notes, favorites, bookmarks, papers] = await Promise.all([
       db.getReadingSessions(userId),
-      db.getNotes(),
-      db.getFavorites(),
-      db.getBookmarks(),
+      db.getNotes(undefined, userId),
+      db.getFavorites(undefined, userId),
+      db.getBookmarks(userId),
       db.getPapers(),
     ]);
 
@@ -431,11 +431,11 @@ export class AnalyticsService {
 
   static async getSummary(userId: string): Promise<AnalyticsSummary> {
     const [profile, sessions, notes, favorites, bookmarks] = await Promise.all([
-      db.getUserProfile(),
+      db.getUserProfile(userId),
       db.getReadingSessions(userId),
-      db.getNotes(),
-      db.getFavorites(),
-      db.getBookmarks(),
+      db.getNotes(undefined, userId),
+      db.getFavorites(undefined, userId),
+      db.getBookmarks(userId),
     ]);
 
     const tz = profile.timezone || "Asia/Kolkata";

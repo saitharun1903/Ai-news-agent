@@ -414,14 +414,19 @@ class StorageRepository {
   async getRecommendedPapers(options?: { limit?: number; userId?: string }): Promise<Paper[]> {
     const data = this.load();
     const limit = options?.limit || 10;
-    const profile = await this.getUserProfile();
+    const profile = await this.getUserProfile(options?.userId);
     const interested = (profile.interestedTopics || []).map((t) => t.toLowerCase());
     const depth = normalizeTechnicalDepth(profile.difficultyPreference);
 
     // Get completed papers to exclude from recommendations (freshness & diversity)
     const completedPaperIds = new Set<string>();
     for (const session of data.readingSessions || []) {
-      if (session.completed) completedPaperIds.add(session.paperId);
+      if (
+        session.completed &&
+        (!options?.userId || session.userId === options.userId || (!session.userId && options.userId === "user_primary"))
+      ) {
+        completedPaperIds.add(session.paperId);
+      }
     }
 
     const availablePapers = data.papers.filter((p) => !completedPaperIds.has(p.id));
@@ -1045,27 +1050,31 @@ class StorageRepository {
     }
     const data = this.load();
     if (userId) {
-      return data.readingSessions.filter((s) => s.userId === userId);
+      return data.readingSessions.filter(
+        (s) => s.userId === userId || (!s.userId && userId === "user_primary")
+      );
     }
     return data.readingSessions;
   }
 
-  async getTodayReadingMinutes(): Promise<number> {
-    const data = this.load();
-    const tz = data.profile.timezone || "Asia/Kolkata";
+  async getTodayReadingMinutes(userId: string = "user_primary"): Promise<number> {
+    const sessions = await this.getReadingSessions(userId);
+    const profile = await this.getUserProfile(userId);
+    const tz = profile.timezone || "Asia/Kolkata";
     const todayStr = getLocalDateString(new Date(), tz);
-    const todaySessions = (data.readingSessions || []).filter((s) =>
+    const todaySessions = sessions.filter((s) =>
       getLocalDateString(s.startedAt || s.lastUpdatedAt, tz) === todayStr
     );
     const totalSecs = todaySessions.reduce((sum, s) => sum + (s.timeSpentSeconds || 0), 0);
     return Math.round(totalSecs / 60);
   }
 
-  async getWeeklyReadingActivity(): Promise<{ day: string; date: string; minutes: number }[]> {
-    const data = this.load();
-    const tz = data.profile.timezone || "Asia/Kolkata";
-    const goal = data.profile.dailyGoalMinutes || 25;
-    const dailyMap = getDailyActivityMap(data.readingSessions || [], goal, tz);
+  async getWeeklyReadingActivity(userId: string = "user_primary"): Promise<{ day: string; date: string; minutes: number }[]> {
+    const sessions = await this.getReadingSessions(userId);
+    const profile = await this.getUserProfile(userId);
+    const tz = profile.timezone || "Asia/Kolkata";
+    const goal = profile.dailyGoalMinutes || 25;
+    const dailyMap = getDailyActivityMap(sessions, goal, tz);
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const result: { day: string; date: string; minutes: number }[] = [];
 
@@ -1086,11 +1095,13 @@ class StorageRepository {
     return result;
   }
 
-  async getTopicAffinity(): Promise<{ topic: string; count: number; pct: number }[]> {
+  async getTopicAffinity(userId: string = "user_primary"): Promise<{ topic: string; count: number; pct: number }[]> {
     const data = this.load();
+    const sessions = await this.getReadingSessions(userId);
+    const notes = await this.getNotes(undefined, userId);
     const counts = new Map<string, number>();
 
-    for (const session of data.readingSessions) {
+    for (const session of sessions) {
       const paper = data.papers.find((p) => p.id === session.paperId);
       if (paper) {
         const topic = paper.primaryCategory || "General AI";
@@ -1098,7 +1109,7 @@ class StorageRepository {
       }
     }
 
-    for (const note of data.notes) {
+    for (const note of notes) {
       const topic = note.topic || "General AI";
       counts.set(topic, (counts.get(topic) || 0) + 1);
     }
@@ -1124,18 +1135,26 @@ class StorageRepository {
       return dbBookmarks;
     }
     const data = this.load();
-    return data.bookmarks.sort(
+    const userBookmarks = (data.bookmarks || []).filter(
+      (b) => b.userId === userId || (!b.userId && userId === "user_primary")
+    );
+    return userBookmarks.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
   async addBookmark(b: Omit<Bookmark, "id" | "createdAt">): Promise<Bookmark> {
     const data = this.load();
-    const existing = data.bookmarks.find((item) => item.itemId === b.itemId);
+    data.bookmarks = data.bookmarks || [];
+    const targetUserId = b.userId || "user_primary";
+    const existing = data.bookmarks.find(
+      (item) => item.itemId === b.itemId && (item.userId === targetUserId || (!item.userId && targetUserId === "user_primary"))
+    );
     if (existing) return existing;
 
     const newBookmark: Bookmark = {
       ...b,
+      userId: targetUserId,
       id: `bm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       createdAt: new Date().toISOString(),
     };
@@ -1147,7 +1166,13 @@ class StorageRepository {
 
   async removeBookmark(itemId: string, userId: string = "user_primary"): Promise<void> {
     const data = this.load();
-    data.bookmarks = data.bookmarks.filter((b) => b.itemId !== itemId);
+    data.bookmarks = (data.bookmarks || []).filter(
+      (b) =>
+        !(
+          (b.itemId === itemId || b.id === itemId || (b as any).paperId === itemId) &&
+          (b.userId === userId || (!b.userId && userId === "user_primary"))
+        )
+    );
     this.schedulePersist();
     await deleteBookmarkFromDb(userId, itemId).catch(() => {});
   }
@@ -1161,7 +1186,9 @@ class StorageRepository {
       return dbNotes;
     }
     const data = this.load();
-    let res = [...data.notes];
+    let res = (data.notes || []).filter(
+      (n) => n.userId === userId || (!n.userId && userId === "user_primary")
+    );
     if (filter?.paperId) {
       res = res.filter((n) => n.paperId === filter.paperId);
     }
@@ -1174,8 +1201,10 @@ class StorageRepository {
   async addNote(note: Omit<Note, "id" | "createdAt" | "updatedAt">): Promise<Note> {
     const data = this.load();
     const now = new Date().toISOString();
+    const targetUserId = note.userId || "user_primary";
     const newNote: Note = {
       ...note,
+      userId: targetUserId,
       id: `note_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       createdAt: now,
       updatedAt: now,
@@ -1188,7 +1217,9 @@ class StorageRepository {
 
   async deleteNote(id: string, userId: string = "user_primary"): Promise<void> {
     const data = this.load();
-    data.notes = data.notes.filter((n) => n.id !== id);
+    data.notes = (data.notes || []).filter(
+      (n) => !(n.id === id && (n.userId === userId || (!n.userId && userId === "user_primary")))
+    );
     this.schedulePersist();
     await deleteNoteFromDb(userId, id).catch(() => {});
   }
@@ -1277,7 +1308,9 @@ class StorageRepository {
       return dbFavs;
     }
     const data = this.load();
-    let res = [...(data.favorites || [])];
+    let res = (data.favorites || []).filter(
+      (f) => f.userId === userId || (!f.userId && userId === "user_primary")
+    );
     if (entityType && entityType !== "all") {
       res = res.filter((f) => f.entityType === entityType);
     }
@@ -1287,13 +1320,18 @@ class StorageRepository {
   async addFavorite(fav: Omit<UserFavorite, "id" | "createdAt">): Promise<UserFavorite> {
     const data = this.load();
     data.favorites = data.favorites || [];
+    const targetUserId = fav.userId || "user_primary";
     const existing = data.favorites.find(
-      (f) => f.entityType === fav.entityType && f.entityId === fav.entityId
+      (f) =>
+        f.entityType === fav.entityType &&
+        f.entityId === fav.entityId &&
+        (f.userId === targetUserId || (!f.userId && targetUserId === "user_primary"))
     );
     if (existing) return existing;
 
     const newFav: UserFavorite = {
       ...fav,
+      userId: targetUserId,
       id: `fav_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       createdAt: new Date().toISOString(),
     };
@@ -1308,7 +1346,12 @@ class StorageRepository {
     data.favorites = data.favorites || [];
     const initialLen = data.favorites.length;
     data.favorites = data.favorites.filter(
-      (f) => !(f.entityType === entityType && f.entityId === entityId)
+      (f) =>
+        !(
+          f.entityType === entityType &&
+          f.entityId === entityId &&
+          (f.userId === userId || (!f.userId && userId === "user_primary"))
+        )
     );
     await deleteFavoriteFromDb(userId, entityType, entityId).catch(() => {});
     if (data.favorites.length !== initialLen) {
@@ -1320,7 +1363,12 @@ class StorageRepository {
 
   async isFavorite(entityType: string, entityId: string, userId: string = "user_primary"): Promise<boolean> {
     const data = this.load();
-    return (data.favorites || []).some((f) => f.entityType === entityType && f.entityId === entityId);
+    return (data.favorites || []).some(
+      (f) =>
+        f.entityType === entityType &&
+        f.entityId === entityId &&
+        (f.userId === userId || (!f.userId && userId === "user_primary"))
+    );
   }
 
   // --- Rolling 10-Day Snapshot Archive ---

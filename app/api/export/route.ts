@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { AnalyticsService } from "@/lib/analytics";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const profile = await db.getUserProfile();
+    const userId = await getEffectiveUserId();
+    const profile = await db.getUserProfile(userId);
     const [sessions, favorites, bookmarks, notes, analytics] = await Promise.all([
-      db.getReadingSessions(profile.id),
-      db.getFavorites(),
-      db.getBookmarks(),
-      db.getNotes(),
-      AnalyticsService.getSummary(profile.id),
+      db.getReadingSessions(userId),
+      db.getFavorites(undefined, userId),
+      db.getBookmarks(userId),
+      db.getNotes(undefined, userId),
+      AnalyticsService.getSummary(userId),
     ]);
 
     const exportData = {

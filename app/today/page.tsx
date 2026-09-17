@@ -10,6 +10,7 @@ import {
   formatLunorTime,
   LUNOR_DEFAULT_TIMEZONE,
 } from "@/lib/date";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 import { Clock, ArrowRight, Sparkles, Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +19,12 @@ export const revalidate = 60; // 1-minute revalidation
 export default async function TodayPage() {
   const timezone = LUNOR_DEFAULT_TIMEZONE;
   const todayDate = getLunorBusinessDate(new Date(), timezone);
+  const userId = await getEffectiveUserId();
 
   // 1. Fetch today's immutable daily snapshot strictly for today's IST business date
   const [feed, profile] = await Promise.all([
     db.getDailyFeed(todayDate, timezone),
-    db.getUserProfile(),
+    db.getUserProfile(userId),
   ]);
 
   const analytics = await AnalyticsService.getSummary(profile.id);

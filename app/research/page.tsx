@@ -1,6 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { ResearchDiscoveryEngine } from "@/components/research/research-discovery-engine";
+import { getEffectiveUserId } from "@/lib/supabase/server";
 import { BookOpen, Sparkles } from "lucide-react";
 
 export const revalidate = 60;
@@ -17,11 +18,12 @@ interface ResearchPageProps {
 export default async function ResearchPage({ searchParams }: ResearchPageProps) {
   const params = await searchParams;
   const currentTab = params.tab || "trending";
+  const userId = await getEffectiveUserId();
 
   // Fetch papers and user profile concurrently
   const [papers, profile] = await Promise.all([
     db.getPapers({ limit: 100 }),
-    db.getUserProfile(),
+    db.getUserProfile(userId),
   ]);
 
   return (
